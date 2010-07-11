@@ -6,7 +6,7 @@ void getpass(char *buf);
 
 int create_table();
 
-int fetch_notes(int n, char **buf);
+int fetch_notes(sqlite3 *handle, int n, char **buf);
 
 void print_in_middle(WINDOW * win, int starty, int startx, int width,
 		     char *string, chtype color);

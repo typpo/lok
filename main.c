@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 	   return 1;
 	   }
 	 */
-    init();
+//    init();
 
 	// get key
 //    printw("Enter your key: ");
@@ -38,18 +38,22 @@ int main(int argc, char **argv)
     retval = sqlite3_open("test.db", &handle);
     if (retval) {
         endwin();
-        printf("Couldn't load database.\n");
+        fprintf(stderr, "Couldn't load database: %s\n", sqlite3_errmsg(handle));
+        sqlite3_close(handle);
         return -1;
     }
 
     if (create_table()) {
         endwin();
-        printf("Couldn't create table.\n");
+        fprintf(stderr, "Couldn't load database: %s\n", sqlite3_errmsg(handle));
+        sqlite3_close(handle);
         return -1;
     }
+    fetch_notes(handle, 0, NULL);
 
 	// start main view
-	start();
+	//start();
+    sqlite3_close(handle);
 	return 0;
 }
 
@@ -59,15 +63,26 @@ int create_table()
     return sqlite3_exec(handle, query, 0,0,0);
 }
 
-int fetch_notes(int n, char **buf)
+int fetch_notes(sqlite3 *handle, int n, char **buf)
 {
-    int retval = sqlite3_exec(handle, "SELECT * FROM notes ORDER BY date DESC LIMIT %d", 0,0,0, n);
+    char *query = "SELECT * FROM notes ORDER BY date DESC LIMIT 50";
+    sqlite3_stmt *stmt;
+    int retval = sqlite3_prepare_v2(handle, query, -1, &stmt, 0);
     if (retval) {
-        // failed
-        return retval;
+        return -1;
     }
 
-    // TODO do
+    int cols = sqlite3_column_count(stmt);
+    do {
+        retval = sqlite3_step(stmt);
+        if (retval == SQLITE_ROW) {
+            for (int col=0; col < cols; col++) {
+                const char *val = (const char*)sqlite3_column_text(stmt, col);
+                printf("%s = %s\t", sqlite3_column_name(stmt, col), val);
+            }
+            printf("\n");
+        }
+    } while (retval == SQLITE_ROW);
 
     return 0;
 }
