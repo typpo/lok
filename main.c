@@ -5,6 +5,7 @@
 #include <sqlite3.h>
 #include <menu.h>
 #include "main.h"
+#include "db.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
@@ -56,81 +57,6 @@ int main(int argc, char **argv)
 	//start_main_window();
     sqlite3_close(handle);
 	return 0;
-}
-
-int create_table()
-{
-    char *query = "CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,title TEXT NOT NULL,text TEXT NOT NULL, date DATE NOT NULL)";
-    return sqlite3_exec(handle, query, 0,0,0);
-}
-
-int insert_note(char *title, char *text)
-{
-    // prepare the query
-    sqlite3_stmt *stmt;
-    char *query = "INSERT INTO notes VALUES (NULL, ?, ?, datetime('now'))";
-    if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
-        return -1;
-    }
-    if (sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC)) {
-        return -2;
-    }
-    if (sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC)) {
-        return -3;
-    }
-    // execute it
-    if (sqlite3_step(stmt)) {
-        return -4;
-    }
-    return 0;
-}
-
-int edit_note(int id, char *title, char *text)
-{
-    // prepare the query
-    sqlite3_stmt *stmt;
-    char *query = "UPDATE notes SET title=?, text=? WHERE id=?";
-    if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
-        return -1;
-    }
-    if (sqlite3_bind_int(stmt, 1, id)) {
-        return -2;
-    }
-    if (sqlite3_bind_text(stmt, 2, title, -1, SQLITE_STATIC)) {
-        return -3;
-    }
-    if (sqlite3_bind_text(stmt, 3, text, -1, SQLITE_STATIC)) {
-        return -4;
-    }
-    // execute it
-    if (sqlite3_step(stmt)) {
-        return -5;
-    }
-    return 0;
-}
-
-int fetch_notes(sqlite3 *handle, int n, char **buf)
-{
-    sqlite3_stmt *stmt;
-    char *query = "SELECT * FROM notes ORDER BY date DESC LIMIT 50";
-    int retval = sqlite3_prepare_v2(handle, query, -1, &stmt, 0);
-    if (retval) {
-        return -1;
-    }
-
-    int cols = sqlite3_column_count(stmt);
-    do {
-        retval = sqlite3_step(stmt);
-        if (retval == SQLITE_ROW) {
-            for (int col=0; col < cols; col++) {
-                const char *val = (const char*)sqlite3_column_text(stmt, col);
-                printf("%s = %s\t", sqlite3_column_name(stmt, col), val);
-            }
-            printf("\n");
-        }
-    } while (retval == SQLITE_ROW);
-
-    return 0;
 }
 
 void getpass(char *buf)
