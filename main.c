@@ -49,7 +49,8 @@ int main(int argc, char **argv)
         sqlite3_close(handle);
         return -1;
     }
-    fetch_notes(handle, 0, NULL);
+    //insert_note("testsubj", "testtext");
+    //fetch_notes(handle, 0, NULL);
 
 	// start main view
 	//start();
@@ -63,10 +64,55 @@ int create_table()
     return sqlite3_exec(handle, query, 0,0,0);
 }
 
+int insert_note(char *title, char *text)
+{
+    // prepare the query
+    sqlite3_stmt *stmt;
+    char *query = "INSERT INTO notes VALUES (NULL, ?, ?, datetime('now'))";
+    if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
+        return -1;
+    }
+    if (sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC)) {
+        return -2;
+    }
+    if (sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC)) {
+        return -3;
+    }
+    // execute it
+    if (sqlite3_step(stmt)) {
+        return -4;
+    }
+    return 0;
+}
+
+int edit_note(int id, char *title, char *text)
+{
+    // prepare the query
+    sqlite3_stmt *stmt;
+    char *query = "UPDATE notes SET title=?, text=? WHERE id=?";
+    if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
+        return -1;
+    }
+    if (sqlite3_bind_int(stmt, 1, id)) {
+        return -2;
+    }
+    if (sqlite3_bind_text(stmt, 2, title, -1, SQLITE_STATIC)) {
+        return -3;
+    }
+    if (sqlite3_bind_text(stmt, 3, text, -1, SQLITE_STATIC)) {
+        return -4;
+    }
+    // execute it
+    if (sqlite3_step(stmt)) {
+        return -5;
+    }
+    return 0;
+}
+
 int fetch_notes(sqlite3 *handle, int n, char **buf)
 {
-    char *query = "SELECT * FROM notes ORDER BY date DESC LIMIT 50";
     sqlite3_stmt *stmt;
+    char *query = "SELECT * FROM notes ORDER BY date DESC LIMIT 50";
     int retval = sqlite3_prepare_v2(handle, query, -1, &stmt, 0);
     if (retval) {
         return -1;
