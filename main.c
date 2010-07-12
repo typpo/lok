@@ -37,48 +37,47 @@ int main(int argc, char **argv)
 //    input_key(key);
 
 	// connect to db 
-    if (db_start("test.db", handle) < 0) {
-        // TODO shutdown ncurses
-        return 1;
-    }
-
-    //insert_note("testsubj", "testtext");
-    //fetch_notes(handle, 0, NULL);
+	if (db_start("test.db", handle) < 0) {
+		// TODO shutdown ncurses
+		return 1;
+	}
+	//insert_note("testsubj", "testtext");
+	//fetch_notes(handle, 0, NULL);
 
 	// start main view
 	//start_main_window();
-    db_shutdown(handle);
+	db_shutdown(handle);
 	return 0;
 }
 
 void input_key(char *buf)
 {
-    char key;
-    char *ptr = buf;
-    char *max = buf + MAX_KEY_LEN - 1;
-    do {
-        if (ptr >= max) {
-            printf("\nReached key maximum\n");
-            break;
-        }
+	char key;
+	char *ptr = buf;
+	char *max = buf + MAX_KEY_LEN - 1;
+	do {
+		if (ptr >= max) {
+			printf("\nReached key maximum\n");
+			break;
+		}
 
-        key = getch();
-        switch (key) {
-            case (char)KEY_BACKSPACE:
-                // backspace
-                if (ptr > buf) {
-                    *(--ptr) = 0;
-                }
-                break;
-            default:
-                if (key > 31 && key < 127) {
-                    *(ptr++) = key;
-                }
-        }
-    } while (key != '\n');
-    *ptr = 0;
+		key = getch();
+		switch (key) {
+		case (char) KEY_BACKSPACE:
+			// backspace
+			if (ptr > buf) {
+				*(--ptr) = 0;
+			}
+			break;
+		default:
+			if (key > 31 && key < 127) {
+				*(ptr++) = key;
+			}
+		}
+	} while (key != '\n');
+	*ptr = 0;
 
-    // TODO get hash
+	// TODO get hash
 }
 
 void usage()
@@ -88,14 +87,14 @@ void usage()
 
 void init()
 {
-    // initialize curses
-    initscr();
-    start_color();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+	// initialize curses
+	initscr();
+	start_color();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
+	init_pair(1, COLOR_RED, COLOR_BLACK);
+	init_pair(2, COLOR_CYAN, COLOR_BLACK);
 }
 
 void start_main_window()
@@ -155,7 +154,7 @@ void start_main_window()
 	}
 	free(items);
 	free(item_names);
-    sqlite3_close(handle);
+	sqlite3_close(handle);
 	endwin();
 }
 
@@ -186,7 +185,7 @@ void loop(WINDOW * menu_win, MENU * menu)
 
 // Prints text in the middle of a window, taken from ncurses docs
 void print_centered(WINDOW * win, int starty, int startx, int width,
-		     char *string, chtype color)
+		    char *string, chtype color)
 {
 	int length, x, y;
 	float temp;

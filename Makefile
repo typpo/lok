@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-c -Wall -std=c99 -pedantic -g
 LDFLAGS=-lncurses -lmenu -lsqlite3
-SOURCES=main.c writing.c db.c
+SOURCES=main.c writing.c db.c crypto.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=lok
 
