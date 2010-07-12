@@ -5,9 +5,9 @@
 
 // ** db functions
 
-sqlite3 *db_start(char *path);
+int db_start(char *path, sqlite3 *handle);
 
-int db_shutdown(sqlite3 *handle);
+void db_shutdown(sqlite3 *handle);
 
 int db_create_table();
 

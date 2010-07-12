@@ -13,7 +13,7 @@ typedef struct lok_item {
 
 void usage();
 
-void getpass(char *buf);
+void input_key(char *buf);
 
 void init();
 

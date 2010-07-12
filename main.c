@@ -9,15 +9,17 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
+// maximum characters in key
 #define MAX_KEY_LEN 30
 
+// number of notes to display at once
+#define MAX_DISPLAY 50
+
 // passkey
-// TODO hash
 char key[MAX_KEY_LEN];
 
 // Database pointers
 sqlite3 *handle;
-//sqlite_stmt *stmt;
 
 int main(int argc, char **argv)
 {
@@ -32,34 +34,24 @@ int main(int argc, char **argv)
 	// get key
 //    printw("Enter your key: ");
 //    refresh();
-//    getpass(key);
+//    input_key(key);
 
 	// connect to db 
-    int retval;
-    retval = sqlite3_open("test.db", &handle);
-    if (retval) {
-        endwin();
-        fprintf(stderr, "Couldn't load database: %s\n", sqlite3_errmsg(handle));
-        sqlite3_close(handle);
-        return -1;
+    if (db_start("test.db", handle) < 0) {
+        // TODO shutdown ncurses
+        return 1;
     }
 
-    if (create_table()) {
-        endwin();
-        fprintf(stderr, "Couldn't load database: %s\n", sqlite3_errmsg(handle));
-        sqlite3_close(handle);
-        return -1;
-    }
     //insert_note("testsubj", "testtext");
     //fetch_notes(handle, 0, NULL);
 
 	// start main view
 	//start_main_window();
-    sqlite3_close(handle);
+    db_shutdown(handle);
 	return 0;
 }
 
-void getpass(char *buf)
+void input_key(char *buf)
 {
     char key;
     char *ptr = buf;
@@ -85,11 +77,13 @@ void getpass(char *buf)
         }
     } while (key != '\n');
     *ptr = 0;
+
+    // TODO get hash
 }
 
 void usage()
 {
-	printf("lok sqlite.db");
+	printf("lok your_sqlite.db");
 }
 
 void init()
@@ -140,7 +134,7 @@ void start_main_window()
 	box(menu_win, 0, 0);
 
 	// print heading
-	print_in_middle(menu_win, 1, 0, 80, "lok", COLOR_PAIR(1));
+	print_centered(menu_win, 1, 0, 80, "lok", COLOR_PAIR(1));
 	mvwhline(menu_win, 2, 1, ACS_HLINE, 78);
 
 	// show menu
@@ -191,7 +185,7 @@ void loop(WINDOW * menu_win, MENU * menu)
 }
 
 // Prints text in the middle of a window, taken from ncurses docs
-void print_in_middle(WINDOW * win, int starty, int startx, int width,
+void print_centered(WINDOW * win, int starty, int startx, int width,
 		     char *string, chtype color)
 {
 	int length, x, y;

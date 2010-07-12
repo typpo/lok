@@ -2,6 +2,21 @@
 #include <stdlib.h>
 #include <sqlite3.h>
 
+int db_start(char *path, sqlite3 *handle)
+{
+    if (sqlite3_open(path, &handle)) {
+        fprintf(stderr, "Couldn't load database: %s\n", sqlite3_errmsg(handle));
+        sqlite3_close(handle);
+        return -1;
+    }
+    return 0;
+}
+
+void db_shutdown(sqlite3 *handle)
+{
+    sqlite3_close(handle);
+}
+
 int create_table(sqlite3* handle)
 {
     char *query = "CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,title TEXT NOT NULL,text TEXT NOT NULL, date DATE NOT NULL)";
@@ -63,17 +78,19 @@ int fetch_notes(sqlite3 *handle, int n, char **buf)
     }
 
     int cols = sqlite3_column_count(stmt);
-    int n = 0;
+    int i = 0;
+    // TODO make limit 50 a constant
+    buf = (char **) calloc(50, sizeof(char *));
     do {
         retval = sqlite3_step(stmt);
         if (retval == SQLITE_ROW) {
-            buf = (char **) calloc(n_choices, sizeof(char *));
             for (int col=0; col < cols; col++) {
                 const char *val = (const char*)sqlite3_column_text(stmt, col);
                 printf("%s = %s\t", sqlite3_column_name(stmt, col), val);
-                item_names[i] = malloc(sizeof(char) * 10);
+                buf[i] = malloc(sizeof(char) * 10);
+            }
             printf("\n");
-            n++;
+            i++;
         }
     } while (retval == SQLITE_ROW);
 
