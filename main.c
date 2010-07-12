@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     //fetch_notes(handle, 0, NULL);
 
 	// start main view
-	//start();
+	//start_main_window();
     sqlite3_close(handle);
 	return 0;
 }
@@ -178,7 +178,7 @@ void init()
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
 }
 
-void start()
+void start_main_window()
 {
 	// create menu window
 	WINDOW *menu_win = newwin(24, 80, 0, 0);
@@ -239,10 +239,9 @@ void start()
 	endwin();
 }
 
-// Main feedback loop
+// Loop for processing user input
 void loop(WINDOW * menu_win, MENU * menu)
 {
-	// wait for input
 	int c;
 	while ((c = wgetch(menu_win)) != 'q') {
 		switch (c) {
@@ -263,7 +262,6 @@ void loop(WINDOW * menu_win, MENU * menu)
 		}
 		wrefresh(menu_win);
 	}
-
 }
 
 // Prints text in the middle of a window, taken from ncurses docs
