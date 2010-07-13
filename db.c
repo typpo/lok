@@ -33,21 +33,11 @@ int insert_note(sqlite3 * handle, char *title, char *text)
 	sqlite3_stmt *stmt;
 	char *query =
 	    "INSERT INTO notes VALUES (NULL, ?, ?, datetime('now'), datetime('now'))";
-	if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
-		return -1;
-	}
-	if (sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC)) {
-		return -1;
-	}
-	if (sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC)) {
-		return -1;
-	}
-	// execute it
-	if (sqlite3_step(stmt)) {
-		return -1;
-	}
-
-    if (sqlite3_finalize(stmt)) {
+	if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)
+        && sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC)
+        && sqlite3_bind_text(stmt, 2, text, -1, SQLITE_STATIC)
+        && sqlite3_step(stmt)
+        && sqlite3_finalize(stmt)) {
         return -1;
     }
 	return 0;
@@ -59,27 +49,14 @@ int edit_note(sqlite3 * handle, int id, char *title, char *text)
 	sqlite3_stmt *stmt;
 	char *query =
         "UPDATE notes SET title=?, text=?, edited=datetime('now') WHERE id=?";
-	if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)) {
-		return -1;
-	}
-	if (sqlite3_bind_int(stmt, 1, id)) {
-		return -1;
-	}
-	if (sqlite3_bind_text(stmt, 2, title, -1, SQLITE_STATIC)) {
-		return -1;
-	}
-	if (sqlite3_bind_text(stmt, 3, text, -1, SQLITE_STATIC)) {
-		return -1;
-	}
-	// execute it
-	if (sqlite3_step(stmt)) {
-		return -1;
-	}
-
-    if (sqlite3_finalize(stmt)) {
+	if (sqlite3_prepare_v2(handle, query, -1, &stmt, 0)
+        && sqlite3_bind_int(stmt, 1, id)
+        && sqlite3_bind_text(stmt, 2, title, -1, SQLITE_STATIC)
+        && sqlite3_bind_text(stmt, 3, text, -1, SQLITE_STATIC)
+        && sqlite3_step(stmt)
+        && sqlite3_finalize(stmt)) {
         return -1;
     }
-
 	return 0;
 }
 
@@ -108,7 +85,7 @@ int fetch_notes(sqlite3 * handle, int n, lok_item **buf)
         char *title = malloc(sizeof(char)*strlen(tmp_title));
         char *text = malloc(sizeof(char)*strlen(tmp_text));
         char *edited = malloc(sizeof(char)*strlen(tmp_edited));
-        const char *added = malloc(sizeof(char)*strlen(tmp_added));
+        char *added = malloc(sizeof(char)*strlen(tmp_added));
 
         strcpy(title, tmp_title);
         strcpy(text, tmp_text);

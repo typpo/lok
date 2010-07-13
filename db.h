@@ -5,11 +5,11 @@
 
 // info for showing things in menu
 typedef struct {
+    int id;
     char *title;
     char *text;
     char *edited;
-    const int id;
-    const char *added;
+    char *added;
 } lok_item;
 
 // ** db functions
