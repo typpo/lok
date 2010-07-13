@@ -1,14 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-// info for showing things in menu
-typedef struct lok_item {
-    int id;
-    char *title;
-    char *last_edited;
-    char *created;
-} lok_item;
-
 // ** Startup functions
 
 void usage();

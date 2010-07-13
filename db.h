@@ -3,15 +3,26 @@
 
 #include <sqlite3.h>
 
+// info for showing things in menu
+typedef struct {
+    char *title;
+    char *text;
+    char *edited;
+    const int id;
+    const char *added;
+} lok_item;
+
 // ** db functions
 
 int db_start(char *path, sqlite3 *handle);
 
 void db_shutdown(sqlite3 *handle);
 
+void free_notes(char **buf);
+
 int db_create_table();
 
-int db_fetch_notes(sqlite3 *handle, int n, char **buf);
+int fetch_notes(sqlite3 * handle, int n, lok_item **buf);
 
 int db_insert_note(sqlite3 *handle, char *title, char *text);
 
