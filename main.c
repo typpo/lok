@@ -38,11 +38,14 @@ int main(int argc, char **argv)
         printf("Something fucked up\n");
 		return 1;
 	}
-	//insert_note("testsubj", "testtext");
+
+    db_create_table();
+	db_insert_note("testsubj", "testtext");
 	//fetch_notes(handle, 0, NULL);
 
 	// start main view
 	//start_main_window();
+
 	db_shutdown();
 	return 0;
 }

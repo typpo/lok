@@ -18,11 +18,11 @@ int db_start(char *path, char *key);
 
 void db_shutdown();
 
-void free_notes(char **buf);
+void db_free_notes(char **buf);
 
 int db_create_table();
 
-int fetch_notes(int n, lok_item **buf);
+int db_fetch_notes(int n, lok_item **buf);
 
 int db_insert_note(char *title, char *text);
 
