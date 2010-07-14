@@ -4,30 +4,48 @@
 #include <string.h>
 #include "db.h"
 
-int db_start(char *path, sqlite3 * handle)
+// DB connection
+sqlite3 *handle;
+
+int db_start(char *path, char *key)
 {
 	if (sqlite3_open(path, &handle)) {
 		fprintf(stderr, "Couldn't load database: %s\n",
 			sqlite3_errmsg(handle));
+        printf("Broke\n");
 		sqlite3_close(handle);
 		return -1;
 	}
+/*
+    if (sqlite3_key(handle, key, strlen(key))) {
+		fprintf(stderr, "Couldn't load database with key: %s\n",
+			sqlite3_errmsg(handle));
+        printf("Broke2\n");
+		sqlite3_close(handle);
+		return -1;
+    }
+    */
+
+    printf("Started db connection\n");
 	return 0;
 }
 
-void db_shutdown(sqlite3 * handle)
+void db_shutdown()
 {
-	sqlite3_close(handle);
+	if (sqlite3_close(handle)) {
+		fprintf(stderr, "Couldn't close database: %s\n",
+			sqlite3_errmsg(handle));
+    }
 }
 
-int create_table(sqlite3 * handle)
+int create_table()
 {
 	char *query =
 	    "CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY,title TEXT NOT NULL,text TEXT NOT NULL, edited DATE NOT NULL, added DATE NOT NULL)";
 	return sqlite3_exec(handle, query, 0, 0, 0);
 }
 
-int insert_note(sqlite3 * handle, char *title, char *text)
+int insert_note(char *title, char *text)
 {
 	// prepare the query
 	sqlite3_stmt *stmt;
@@ -43,7 +61,7 @@ int insert_note(sqlite3 * handle, char *title, char *text)
 	return 0;
 }
 
-int edit_note(sqlite3 * handle, int id, char *title, char *text)
+int edit_note(int id, char *title, char *text)
 {
 	// prepare the query
 	sqlite3_stmt *stmt;
@@ -61,7 +79,7 @@ int edit_note(sqlite3 * handle, int id, char *title, char *text)
 }
 
 // allocates memory for buf
-int fetch_notes(sqlite3 * handle, int n, lok_item **buf)
+int fetch_notes(int n, lok_item **buf)
 {
 	sqlite3_stmt *stmt;
 	// TODO make limit 50 a constant, possibly change order to added

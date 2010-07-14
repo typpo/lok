@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <curses.h>
-#include <sqlite3.h>
 #include <menu.h>
 #include "main.h"
 #include "db.h"
@@ -17,9 +16,6 @@
 
 // passkey
 char key[MAX_KEY_LEN];
-
-// Database pointers
-sqlite3 *handle;
 
 int main(int argc, char **argv)
 {
@@ -36,9 +32,10 @@ int main(int argc, char **argv)
 //    refresh();
 //    input_key(key);
 
-	// connect to db 
-	if (db_start("test.db", handle) < 0) {
+	// connect to db
+	if (db_start("test.db", "testkey") < 0) {
 		// TODO shutdown ncurses
+        printf("Something fucked up\n");
 		return 1;
 	}
 	//insert_note("testsubj", "testtext");
@@ -46,7 +43,7 @@ int main(int argc, char **argv)
 
 	// start main view
 	//start_main_window();
-	db_shutdown(handle);
+	db_shutdown();
 	return 0;
 }
 
@@ -154,7 +151,7 @@ void start_main_window()
 	}
 	free(items);
 	free(item_names);
-	sqlite3_close(handle);
+    db_shutdown();
 	endwin();
 }
 
