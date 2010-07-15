@@ -34,8 +34,7 @@ int main(int argc, char **argv)
 
 	// connect to db
 	if (db_start("test.db", "testkey") < 0) {
-		// TODO shutdown ncurses
-        printf("Something fucked up\n");
+        endwin();
 		return 1;
 	}
 
@@ -43,14 +42,14 @@ int main(int argc, char **argv)
     db_create_table();
 
     // insert test row
-    //db_insert_note("testtitle", "testext");
+    db_insert_note("testtitle", "testext");
 
     // get notes
     lok_item *notes;
     int num_notes;
 	db_fetch_notes(0, &notes, &num_notes);
 
-	// start main view
+	// start view
 	start_main_window(notes, num_notes);
 
     // free notes list
@@ -104,7 +103,6 @@ void init_curses()
 	noecho();
 	keypad(stdscr, TRUE);
 	init_pair(1, COLOR_RED, COLOR_BLACK);
-	init_pair(2, COLOR_CYAN, COLOR_BLACK);
 }
 
 void start_main_window(lok_item *notes, int num_notes)
@@ -114,9 +112,9 @@ void start_main_window(lok_item *notes, int num_notes)
 	keypad(menu_win, TRUE);
 
 	// create menu items
-	ITEM **items = (ITEM **) calloc(num_notes, sizeof(ITEM *));
+	ITEM **items = (ITEM **) calloc(num_notes+1, sizeof(ITEM *));
 	for (int i = 0; i < num_notes; i++) {
-		items[i] = new_item(notes[i].title, notes[i].text);
+		items[i] = new_item(notes[i].title, notes[i].added);
 	}
 
 	// create menu
@@ -132,7 +130,7 @@ void start_main_window(lok_item *notes, int num_notes)
 	// keep height menu subwin height - 1
 	set_menu_format(menu, 19, 1);
 
-	/* Set menu mark to the string " * " */
+    // menu mark 
 	set_menu_mark(menu, " * ");
 
 	// print border
@@ -146,7 +144,6 @@ void start_main_window(lok_item *notes, int num_notes)
 	post_menu(menu);
 	wrefresh(menu_win);
 	refresh();
-
 
 	// process input input
 	loop(menu_win, menu);

@@ -84,6 +84,7 @@ int db_fetch_notes(int limit, lok_item **buf, int *num_notes)
 	lok_item *ptr = malloc(50*sizeof(lok_item));
     *buf = ptr;
     int i;
+    // walk through each row in results
     for (i=0;sqlite3_step(stmt)==SQLITE_ROW;i++) {
         const int id = (const int)sqlite3_column_int(stmt, 0);
         const char *title = (const char *)sqlite3_column_text(stmt, 1);
@@ -92,11 +93,14 @@ int db_fetch_notes(int limit, lok_item **buf, int *num_notes)
         const char *added = (const char *)sqlite3_column_text(stmt, 4);
 
         ptr->id = id;
+
+        // allocate pointers
         ptr->title = malloc((strlen(title)+1)*sizeof(char));
         ptr->text = malloc((strlen(text)+1)*sizeof(char));
         ptr->added = malloc((strlen(added)+1)*sizeof(char));
         ptr->edited = malloc((strlen(edited)+1)*sizeof(char));
 
+        // copy query results
         strcpy(ptr->title, title);
         strcpy(ptr->edited, edited);
         strcpy(ptr->added, added);
