@@ -102,7 +102,6 @@ int db_fetch_notes(int limit, lok_item **buf, int *num_notes)
         strcpy(ptr->added, added);
         strcpy(ptr->text, text);
 
-        printf("Found title: %s\n", ptr->title);
         ptr++;
     }
     // record number of notes

@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	   return 1;
 	   }
 	 */
-//    init();
+    init_curses();
 
 	// get key
 //    printw("Enter your key: ");
@@ -43,25 +43,20 @@ int main(int argc, char **argv)
     db_create_table();
 
     // insert test row
-    db_insert_note("testtitle", "testext");
+    //db_insert_note("testtitle", "testext");
 
     // get notes
     lok_item *notes;
     int num_notes;
 	db_fetch_notes(0, &notes, &num_notes);
 
-    // print notes
-    printf("Gots %d notes\n", num_notes);
-    for (int i=0; i<num_notes; i++) {
-        printf("%s\n", notes[i].text);
-    }
+	// start main view
+	start_main_window(notes, num_notes);
 
     // free notes list
     db_free_notes(notes, num_notes);
-	// start main view
-	//start_main_window();
-
 	db_shutdown();
+
 	return 0;
 }
 
@@ -100,7 +95,7 @@ void usage()
 	printf("lok your_sqlite.db");
 }
 
-void init()
+void init_curses()
 {
 	// initialize curses
 	initscr();
@@ -112,20 +107,16 @@ void init()
 	init_pair(2, COLOR_CYAN, COLOR_BLACK);
 }
 
-void start_main_window()
+void start_main_window(lok_item *notes, int num_notes)
 {
 	// create menu window
 	WINDOW *menu_win = newwin(24, 80, 0, 0);
 	keypad(menu_win, TRUE);
 
 	// create menu items
-	int n_choices = 20;	//ARRAY_SIZE(choices);
-	ITEM **items = (ITEM **) calloc(n_choices, sizeof(ITEM *));
-	char **item_names = (char **) calloc(n_choices, sizeof(char *));
-	for (int i = 0; i < n_choices; i++) {
-		item_names[i] = malloc(sizeof(char) * 10);
-		snprintf(item_names[i], 10, "%d!", i);
-		items[i] = new_item(item_names[i], "");
+	ITEM **items = (ITEM **) calloc(num_notes, sizeof(ITEM *));
+	for (int i = 0; i < num_notes; i++) {
+		items[i] = new_item(notes[i].title, notes[i].text);
 	}
 
 	// create menu
@@ -163,13 +154,10 @@ void start_main_window()
 	// clean up
 	unpost_menu(menu);
 	free_menu(menu);
-	for (int i = 0; i < n_choices; i++) {
+	for (int i = 0; i < num_notes; i++) {
 		free_item(items[i]);
-		free(item_names[i]);
 	}
 	free(items);
-	free(item_names);
-    db_shutdown();
 	endwin();
 }
 
