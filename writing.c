@@ -3,28 +3,35 @@
 #include <string.h>
 #include "writing.h"
 
-// 1 on success, 0 on failure
-int editor_write(char *tmp, char *buf)
+// 1 on success, 0 on no edit, <0 on failure
+int editor_do(char *tmppath, char *defaulttext, char *buf)
 {
-	// construct vim command
-	int len = 4 + strlen(tmp);
-	char cmd[len];
-	snprintf(cmd, len, "vim %s", tmp);
+    // write to tmp
+    FILE *f = fopen(tmppath, "w");
+    if (!f) {
+        printf("Couldn't write file %s\n", tmppath);
+        return -1;
+    }
+    fprintf(f, "%s", defaulttext);
+    fclose(f);
 
-	// edit
+	// construct vim command
+	int len = 5 + strlen(tmppath);
+	char cmd[len];
+	snprintf(cmd, len, "vim %s", tmppath);
+
+	// do edit
 	system(cmd);
 
-	// read tmp file
-	if (editor_read(tmp, &buf) > 0) {
-		// delete tmp file
-		snprintf(cmd, len, "rm %s", tmp);
-		system(cmd);
-		return 1;
+	// read tmppath file
+	if (editor_read(tmppath, &buf) > 0) {
+		// delete tmppath file
+        return remove(tmppath) == 0;
 	}
 	return 0;
 }
 
-// Reads a file, returns number of bytes read, -1 or -2 on failure
+// Reads a file, returns number of bytes read, <0 on failure.
 int editor_read(char *path, char **buf)
 {
 	FILE *f = fopen(path, "r");
@@ -38,7 +45,7 @@ int editor_read(char *path, char **buf)
 	*buf = (char *) malloc(size + 1);
 	if (size != fread(*buf, sizeof(char), size, f)) {
 		free(*buf);
-		return -2;
+		return -1;
 	}
 	fclose(f);
 	*(buf + size) = 0;

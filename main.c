@@ -5,6 +5,7 @@
 #include <menu.h>
 #include "main.h"
 #include "db.h"
+#include "writing.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
@@ -162,6 +163,7 @@ void start_main_window(lok_item *notes, int num_notes)
 void loop(WINDOW * menu_win, MENU * menu)
 {
 	int c;
+    char test[512];
 	while ((c = wgetch(menu_win)) != 'q') {
 		switch (c) {
 		case KEY_DOWN:
@@ -178,6 +180,9 @@ void loop(WINDOW * menu_win, MENU * menu)
 		case KEY_PPAGE:
 			menu_driver(menu, REQ_SCR_UPAGE);
 			break;
+        case 'e':
+            editor_do("tmp", "test", test);
+            break;
 		}
 		wrefresh(menu_win);
 	}
