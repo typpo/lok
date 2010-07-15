@@ -15,12 +15,14 @@ int db_start(char *path, char *key)
 		sqlite3_close(handle);
 		return -1;
 	}
+#ifndef NO_CRYPTO
     if (sqlite3_key(handle, key, strlen(key))) {
 		fprintf(stderr, "Couldn't load database with key: %s\n",
 			sqlite3_errmsg(handle));
 		sqlite3_close(handle);
 		return -1;
     }
+#endif
 
     printf("Started db connection\n");
 	return 0;
