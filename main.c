@@ -39,10 +39,25 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+    // make sure table exists
     db_create_table();
-	db_insert_note("testsubj", "testtext");
-	//fetch_notes(handle, 0, NULL);
 
+    // insert test row
+    db_insert_note("testtitle", "testext");
+
+    // get notes
+    lok_item *notes;
+    int num_notes;
+	db_fetch_notes(0, &notes, &num_notes);
+
+    // print notes
+    printf("Gots %d notes\n", num_notes);
+    for (int i=0; i<num_notes; i++) {
+        printf("%s\n", notes[i].text);
+    }
+
+    // free notes list
+    db_free_notes(notes, num_notes);
 	// start main view
 	//start_main_window();
 

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -std=c99 -pedantic -g -DSQLITE_HAS_CODEC
+CFLAGS=-c -Wall -pedantic -std=c99 -g -DSQLITE_HAS_CODEC
 LDFLAGS=-L/usr/local/lib -lncurses -lmenu -lsqlite3
 SOURCES=main.c writing.c db.c crypto.c
 OBJECTS=$(SOURCES:.c=.o)
