@@ -181,7 +181,10 @@ void loop(WINDOW * menu_win, MENU * menu)
 			menu_driver(menu, REQ_SCR_UPAGE);
 			break;
         case 'e':
-            editor_do("tmp", "test", test);
+            def_prog_mode();
+            endwin();
+            editor_do("tmp", "Enter title here", test);
+            refresh();
             break;
 		}
 		wrefresh(menu_win);
