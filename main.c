@@ -15,8 +15,14 @@
 // number of notes to display at once
 #define MAX_DISPLAY 50
 
+// name of temporary file for read/writes
+#define TEMP_FILE "tmp"
+
 // passkey
 char key[MAX_KEY_LEN];
+
+// stored notes
+lok_item *notes;
 
 int main(int argc, char **argv)
 {
@@ -43,10 +49,9 @@ int main(int argc, char **argv)
     db_create_table();
 
     // insert test row
-    db_insert_note("testtitle", "testext");
+    db_insert_note("Placeholder", "Placeholder\n\nsome text");
 
     // get notes
-    lok_item *notes;
     int num_notes;
 	db_fetch_notes(0, &notes, &num_notes);
 
@@ -115,7 +120,9 @@ void start_main_window(lok_item *notes, int num_notes)
 	// create menu items
 	ITEM **items = (ITEM **) calloc(num_notes+1, sizeof(ITEM *));
 	for (int i = 0; i < num_notes; i++) {
-		items[i] = new_item(notes[i].title, notes[i].added);
+        char id[10];
+        sprintf(id, "%d", notes[i].id);
+		items[i] = new_item(notes[i].title, id);
 	}
 
 	// create menu
@@ -163,7 +170,6 @@ void start_main_window(lok_item *notes, int num_notes)
 void loop(WINDOW * menu_win, MENU * menu)
 {
 	int c;
-    char test[512];
 	while ((c = wgetch(menu_win)) != 'q') {
 		switch (c) {
 		case KEY_DOWN:
@@ -180,15 +186,61 @@ void loop(WINDOW * menu_win, MENU * menu)
 		case KEY_PPAGE:
 			menu_driver(menu, REQ_SCR_UPAGE);
 			break;
-        case 'e':
-            def_prog_mode();
-            endwin();
-            editor_do("tmp", "Enter title here", test);
-            refresh();
-            break;
+        case 'a':   // add
+            do_add();
+            continue;
+        case 'e':   // edit
+            do_edit(item_index(current_item(menu)));
+            continue;
 		}
 		wrefresh(menu_win);
 	}
+}
+
+void do_add() {
+    def_prog_mode();
+    endwin();
+
+    // edit
+    char *input;
+    if (editor_do(TEMP_FILE, "", &input) > 0) {
+        if (!input) {
+            free(input);
+        }
+        refresh();
+    }
+
+    // grab title
+    int newline = strcspn(input, "\n");
+    char title[newline+1];
+    strncpy(title, input, newline);
+
+    db_insert_note(title, input);
+    free(input);
+    refresh();
+}
+
+void do_edit(int index) {
+    def_prog_mode();
+    endwin();
+
+    // edit
+    char *input;
+    if (editor_do(TEMP_FILE, notes[index].text, &input)) {
+        if (!input) {
+            free(input);
+        }
+        refresh();
+    }
+
+    // grab title
+    int newline = strcspn(input, "\n");
+    char title[newline+1];
+    strncpy(title, input, newline);
+
+    db_edit_note(notes[index].id, title, input);
+    free(input);
+    refresh();
 }
 
 // Prints text in the middle of a window, taken from ncurses docs

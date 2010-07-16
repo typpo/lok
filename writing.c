@@ -4,7 +4,7 @@
 #include "writing.h"
 
 // 1 on success, 0 on no edit, <0 on failure
-int editor_do(char *tmppath, char *defaulttext, char *buf)
+int editor_do(char *tmppath, char *defaulttext, char **buf)
 {
     // write to tmp
     FILE *f = fopen(tmppath, "w");
@@ -24,11 +24,12 @@ int editor_do(char *tmppath, char *defaulttext, char *buf)
 	system(cmd);
 
 	// read tmppath file
-	if (editor_read(tmppath, &buf) > 0) {
-		// delete tmppath file
-        return remove(tmppath) == 0;
-	}
-	return 0;
+	if (editor_read(tmppath, buf) < 1) {
+        return -1;
+    }
+
+    // delete tmppath file
+    return remove(tmppath) == 0;
 }
 
 // Reads a file, returns number of bytes read, <0 on failure.
@@ -41,10 +42,15 @@ int editor_read(char *path, char **buf)
 
 	fseek(f, 0, SEEK_END);
 	int size = ftell(f);
+    if (size < 1) {
+        fclose(f);
+        return 0;
+    }
 	fseek(f, 0, SEEK_SET);
 	*buf = (char *) malloc(size + 1);
 	if (size != fread(*buf, sizeof(char), size, f)) {
 		free(*buf);
+        fclose(f);
 		return -1;
 	}
 	fclose(f);

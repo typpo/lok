@@ -9,9 +9,14 @@ void usage();
 
 void input_key(char *buf);
 
-void init_curses();
+// ** UI/editing functions
+
+void do_add();
+
+void do_edit(int index);
 
 // ** curses functions
+void init_curses();
 
 void start_main_window(lok_item *notes, int num_notes);
 
