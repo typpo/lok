@@ -108,6 +108,7 @@ void init_curses()
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
+    nonl();
 	init_pair(1, COLOR_RED, COLOR_BLACK);
 }
 
@@ -208,6 +209,7 @@ void do_add() {
             free(input);
         }
         refresh();
+        return;
     }
 
     // grab title
@@ -218,10 +220,13 @@ void do_add() {
     db_insert_note(title, input);
     free(input);
     refresh();
+
+    // workaround for input bug
+    keypad(stdscr, 1);
 }
 
 void do_edit(int index) {
-    def_prog_mode();
+def_prog_mode();
     endwin();
 
     // edit
@@ -231,6 +236,7 @@ void do_edit(int index) {
             free(input);
         }
         refresh();
+        return;
     }
 
     // grab title
@@ -241,6 +247,9 @@ void do_edit(int index) {
     db_edit_note(notes[index].id, title, input);
     free(input);
     refresh();
+
+    // workaround for input bug
+    keypad(stdscr, 1);
 }
 
 // Prints text in the middle of a window, taken from ncurses docs
