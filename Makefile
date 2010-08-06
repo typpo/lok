@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-c -Wall -pedantic -std=c99 -g -DSQLITE_HAS_CODEC
-LDFLAGS=-L/usr/local/lib -lmenu -lsqlite3 -lncurses
+LDFLAGS=-L/usr/local/lib -lmenu -lsqlite3 -lcurses
 SOURCES=main.c writing.c db.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=lok

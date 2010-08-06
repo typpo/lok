@@ -32,12 +32,20 @@ int main(int argc, char **argv)
 	   return 1;
 	   }
 	 */
-    init_curses();
-
 	// get key
 //    printw("Enter your key: ");
 //    refresh();
 //    input_key(key);
+
+    if (init())
+        return 1;
+
+	return 0;
+}
+
+int init()
+{
+    init_curses();
 
 	// connect to db
 	if (db_start("test.db", "testkey") < 0) {
@@ -49,20 +57,28 @@ int main(int argc, char **argv)
     db_create_table();
 
     // insert test row
-    db_insert_note("Placeholder", "Placeholder\n\nsome text");
+    //db_insert_note("Placeholder", "Placeholder\n\nsome text");
 
+    loadview();
+
+    return 0;
+}
+
+void loadview()
+{
     // get notes
     int num_notes;
 	db_fetch_notes(0, &notes, &num_notes);
 
 	// start view
 	start_main_window(notes, num_notes);
+}
 
+void shutdown()
+{
     // free notes list
-    db_free_notes(notes, num_notes);
+    db_free_notes(notes, sizeof(notes)/sizeof(notes[0]));
 	db_shutdown();
-
-	return 0;
 }
 
 void input_key(char *buf)
@@ -107,7 +123,6 @@ void init_curses()
 	start_color();
 	cbreak();
 	noecho();
-	keypad(stdscr, TRUE);
     nonl();
 	init_pair(1, COLOR_RED, COLOR_BLACK);
 }
@@ -189,10 +204,11 @@ void loop(WINDOW * menu_win, MENU * menu)
 			break;
         case 'a':   // add
             do_add();
-            continue;
+            break;
         case 'e':   // edit
             do_edit(item_index(current_item(menu)));
-            continue;
+            keypad(menu_win, TRUE);
+            break;
 		}
 		wrefresh(menu_win);
 	}
@@ -219,14 +235,14 @@ void do_add() {
 
     db_insert_note(title, input);
     free(input);
-    refresh();
 
-    // workaround for input bug
-    keypad(stdscr, 1);
+    refresh();
+    reset_prog_mode();
 }
 
 void do_edit(int index) {
-def_prog_mode();
+    // save and close curses
+    def_prog_mode();
     endwin();
 
     // edit
@@ -235,6 +251,7 @@ def_prog_mode();
         if (!input) {
             free(input);
         }
+        reset_prog_mode();
         refresh();
         return;
     }
@@ -246,10 +263,10 @@ def_prog_mode();
 
     db_edit_note(notes[index].id, title, input);
     free(input);
-    refresh();
 
-    // workaround for input bug
-    keypad(stdscr, 1);
+    // restore
+    reset_prog_mode();
+    refresh();
 }
 
 // Prints text in the middle of a window, taken from ncurses docs

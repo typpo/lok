@@ -7,7 +7,13 @@
 
 void usage();
 
+int init();
+
 void input_key(char *buf);
+
+// ** Shutdown functions
+
+void shutdown();
 
 // ** UI/editing functions
 
