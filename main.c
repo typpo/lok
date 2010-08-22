@@ -7,22 +7,23 @@
 #include "db.h"
 #include "writing.h"
 
-// maximum characters in key
-#define MAX_KEY_LEN 30
-
-// number of notes to display at once
+// Maximum number of notes to load into display
 #define MAX_DISPLAY 50
 
-// maximum length of title, in chars
+// Maximum number of characters in a note title.
+// Longer titles are truncated.
 #define MAX_TITLE_LEN 10
 
-// name of temporary file for read/writes
+// Path to temporary file for editing
 #define TEMP_FILE "tmp"
 
-// passkey
+// Maximum number of characters in database password
+#define MAX_KEY_LEN 30
+
+// User-entered password for the database
 char key[MAX_KEY_LEN];
 
-// stored notes information
+// Stored notes information
 lok_item *notes;
 int num_notes;
 
@@ -65,6 +66,14 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+// Prints complex instructions on how to use this program.
+void usage()
+{
+	printf("lok your_sqlite.db");
+}
+
+// Establishes a connection a specified sqlite database and makes sure the
+// notes table exists.
 int init_db(char *dbfile)
 {
 	// connect to db
@@ -77,6 +86,7 @@ int init_db(char *dbfile)
 	return 0;
 }
 
+// Starts the curses environment.
 void init_curses()
 {
 	initscr();
@@ -87,6 +97,7 @@ void init_curses()
 	init_pair(1, COLOR_RED, COLOR_BLACK);
 }
 
+// Frees the notes list and closes the connection to the database.
 void shutdown()
 {
 	// free notes list
@@ -94,6 +105,8 @@ void shutdown()
 	db_shutdown();
 }
 
+// Reads user input while hiding what the user types.
+// Used for password input.
 void input_key(char *buf)
 {
 	char key;
@@ -124,11 +137,8 @@ void input_key(char *buf)
 	// TODO hash the key and get rid of the plaintext one
 }
 
-void usage()
-{
-	printf("lok your_sqlite.db");
-}
-
+// Loads the notes view in the curses display.
+// Blocks for the duration of the program.
 void start_main_window(lok_item * notes, int num_notes)
 {
 	// create menu window
@@ -169,7 +179,8 @@ void start_main_window(lok_item * notes, int num_notes)
 	wrefresh(menu_win);
 	refresh();
 
-	// process input input
+	// Process user input. This call will block for the duration
+    // of the program.
 	loop(menu_win, menu);
 
 	// clean up curses
@@ -182,7 +193,8 @@ void start_main_window(lok_item * notes, int num_notes)
 	endwin();
 }
 
-// Loop for processing user input
+// Loop for processing user input.
+// Blocks for the duration of the program.
 void loop(WINDOW * menu_win, MENU * menu)
 {
 	int c;
@@ -217,6 +229,7 @@ void loop(WINDOW * menu_win, MENU * menu)
 	}
 }
 
+// Handles switch to vim and back to curses for adding a new note.
 void do_add()
 {
 	def_prog_mode();
@@ -245,6 +258,7 @@ void do_add()
 	reset_prog_mode();
 }
 
+// Handles switch to vim and back to curses for editing an existing note.
 void do_edit(int index)
 {
 	// save and close curses
@@ -277,7 +291,7 @@ void do_edit(int index)
 }
 
 // Takes the first line from input and puts it in title, for a maximum of 
-// len characters
+// len characters.
 void titleFromInput(char *input, char *title, int len)
 {
 	// TODO what if there's no newline?
@@ -285,7 +299,8 @@ void titleFromInput(char *input, char *title, int len)
 	strncpy(title, input, newline < len ? newline : len);
 }
 
-// Prints text in the middle of a window, taken from ncurses docs
+// Prints text in the middle of a window.
+// This function is taken from ncurses docs.
 void print_centered(WINDOW * win, int starty, int startx, int width,
 		    char *string, chtype color)
 {

@@ -4,9 +4,12 @@
 #include <string.h>
 #include "db.h"
 
-// DB connection
+// DB connection pointer
 sqlite3 *handle;
 
+// Opens a connection to the sqlite database at a given path.
+// If not compiled with the NO_CRYPTO, use the provided key to open 
+// the database (sqlcipher).
 int db_start(char *path, char *key)
 {
 	if (sqlite3_open(path, &handle)) {
@@ -27,6 +30,7 @@ int db_start(char *path, char *key)
 	return 0;
 }
 
+// Closes the connection to the database.
 void db_shutdown()
 {
 	if (sqlite3_close(handle)) {
@@ -35,6 +39,7 @@ void db_shutdown()
 	}
 }
 
+// Creates an empty notes table if it does not already exist.
 int db_create_table()
 {
 	char *query =
@@ -42,6 +47,8 @@ int db_create_table()
 	return sqlite3_exec(handle, query, 0, 0, 0);
 }
 
+// Creates a new note.
+// Returns result code of sqlite operation or -1 on failure.
 int db_insert_note(char *title, char *text)
 {
 	sqlite3_stmt *stmt;
@@ -58,6 +65,8 @@ int db_insert_note(char *title, char *text)
 	return ret;
 }
 
+// Edits an existing note.
+// Returns result code of sqlite operation or -1 on failure.
 int db_edit_note(char *id, char *title, char *text)
 {
 	sqlite3_stmt *stmt;
@@ -75,7 +84,9 @@ int db_edit_note(char *id, char *title, char *text)
 	return ret;
 }
 
-// allocates memory for buf
+// Reads notes from the database into memory. Note that this allocates 
+// memory for buf that must be freed later.
+// Returns 0 on success, -1 on failure.
 int db_fetch_notes(int limit, lok_item ** buf, int *num_notes)
 {
 	sqlite3_stmt *stmt;

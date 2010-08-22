@@ -3,7 +3,8 @@
 #include <string.h>
 #include "writing.h"
 
-// 1 on success, 0 on no edit, <0 on failure
+// Opens a note for editing in vim.
+// 1 on success, 0 on no edit, -1 on failure
 int editor_do(char *tmppath, char *defaulttext, char **buf)
 {
 	// write to tmp
@@ -36,7 +37,8 @@ int editor_do(char *tmppath, char *defaulttext, char **buf)
 	return strcmp(defaulttext, *buf) != 0;
 }
 
-// Reads a file, returns number of bytes read, <0 on failure.
+// Reads a file from disk into memory.
+// Returns number of bytes read, -1 on failure.
 long editor_read(char *path, char **buf)
 {
 	long size = -1;
