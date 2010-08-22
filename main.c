@@ -14,7 +14,7 @@
 #define MAX_DISPLAY 50
 
 // maximum length of title, in chars
-#define MAX_TITLE_LEN 20
+#define MAX_TITLE_LEN 10
 
 // name of temporary file for read/writes
 #define TEMP_FILE "tmp"
@@ -46,16 +46,15 @@ int main(int argc, char **argv)
 	// Start curses
 	init_curses();
 	// get key
-//    printw("Enter your key: ");
-//    refresh();
-//    input_key(key);
+    // printw("Enter your key: ");
+    // refresh();
+    // input_key(key);
 	
 	// get notes
-	if (db_fetch_notes(0, &notes, &num_notes) < 0) {
+	if (db_fetch_notes(0, &notes, &num_notes)) {
         printf("Couldn't get notes from db.\n");
 		return 1;
 	}
-    printf("Loaded %d notes.\n", num_notes);
 
 	// start view
 	start_main_window(notes, num_notes);
@@ -187,6 +186,7 @@ void start_main_window(lok_item * notes, int num_notes)
 void loop(WINDOW * menu_win, MENU * menu)
 {
 	int c;
+    int index;
 	while ((c = wgetch(menu_win)) != 'q') {
 		switch (c) {
 		case KEY_DOWN:
@@ -207,7 +207,7 @@ void loop(WINDOW * menu_win, MENU * menu)
 			do_add();
 			break;
 		case 'e':	// edit
-            int index = item_index(current_item(menu))
+            index = item_index(current_item(menu));
             if (index > -1) {
                 do_edit(index);
             }
