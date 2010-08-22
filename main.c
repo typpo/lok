@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         printf("DB connection failed.\n");
 		return 1;
     }
-    printf("DB connection success.\n");
+    printf("db connection success.\n");
 
 	// Start curses
 	init_curses();
@@ -50,11 +50,15 @@ int main(int argc, char **argv)
 //    refresh();
 //    input_key(key);
 	
-    // Start UI
-    if (loadview()) {
-        printf("Loading notes failed.\n");
-        return 1;
-    }
+	// get notes
+	if (db_fetch_notes(0, &notes, &num_notes) < 0) {
+        printf("Couldn't get notes from db.\n");
+		return 1;
+	}
+    printf("Loaded %d notes.\n", num_notes);
+
+	// start view
+	start_main_window(notes, num_notes);
 
 	// Finish
 	shutdown();
@@ -71,33 +75,17 @@ int init_db(char *dbfile)
 	// make sure table exists
 	db_create_table();
 
-	// insert test row
-	// db_insert_note("Placeholder", "Placeholder\n\nsome text");
 	return 0;
 }
 
 void init_curses()
 {
-	// initialize curses
 	initscr();
 	start_color();
 	cbreak();
 	noecho();
 	nonl();
 	init_pair(1, COLOR_RED, COLOR_BLACK);
-}
-
-int loadview()
-{
-	// get notes
-	if (db_fetch_notes(0, &notes, &num_notes) < 0) {
-		return -1;
-	}
-    printf("Loaded %d notes.\n", num_notes);
-
-	// start view
-	start_main_window(notes, num_notes);
-	return 0;
 }
 
 void shutdown()
@@ -134,7 +122,7 @@ void input_key(char *buf)
 	} while (key != '\n');
 	*ptr = 0;
 
-	// TODO get hash
+	// TODO hash the key and get rid of the plaintext one
 }
 
 void usage()
@@ -219,7 +207,10 @@ void loop(WINDOW * menu_win, MENU * menu)
 			do_add();
 			break;
 		case 'e':	// edit
-			do_edit(item_index(current_item(menu)));
+            int index = item_index(current_item(menu))
+            if (index > -1) {
+                do_edit(index);
+            }
 			break;
 		}
 		wrefresh(menu_win);
@@ -264,6 +255,7 @@ void do_edit(int index)
 	char *input = 0;
 
 	// let user perform edit
+    printf("Editing %d\n", index);
 	int edit_result = editor_do(TEMP_FILE, notes[index].text, &input);
 	if (edit_result < 0) {
 		goto restore;

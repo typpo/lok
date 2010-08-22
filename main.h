@@ -7,8 +7,6 @@
 
 void usage();
 
-int loadview();
-
 void input_key(char *buf);
 
 // ** Shutdown functions
