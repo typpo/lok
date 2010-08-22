@@ -17,7 +17,7 @@ void shutdown();
 
 // ** DB interaction functions
 
-int init_db();
+int init_db(char *dbfile);
 
 void do_add();
 

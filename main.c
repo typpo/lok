@@ -39,7 +39,8 @@ int main(int argc, char **argv)
 //    input_key(key);
     
     // Initialize backend
-    if (init_db())
+    // TODO use command line arg
+    if (init_db("test.db"))
         return -1;
 
     // Start UI
@@ -52,10 +53,10 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-int init_db()
+int init_db(char *dbfile)
 {
 	// connect to db
-	if (db_start("test.db", "testkey") < 0) {
+	if (db_start(dbfile, "testkey") < 0) {
 		return 1;
 	}
 
