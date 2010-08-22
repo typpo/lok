@@ -23,6 +23,7 @@ char key[MAX_KEY_LEN];
 
 // stored notes
 lok_item *notes;
+int num_notes;
 
 int main(int argc, char **argv)
 {
@@ -36,20 +37,25 @@ int main(int argc, char **argv)
 //    printw("Enter your key: ");
 //    refresh();
 //    input_key(key);
+    
+    // Initialize backend
+    if (init_db())
+        return -1;
 
-    if (init())
-        return 1;
+    // Start UI
+    init_curses();
+    loadview();
+
+    // Finish
+    shutdown();
 
 	return 0;
 }
 
-int init()
+int init_db()
 {
-    init_curses();
-
 	// connect to db
 	if (db_start("test.db", "testkey") < 0) {
-        endwin();
 		return 1;
 	}
 
@@ -57,27 +63,36 @@ int init()
     db_create_table();
 
     // insert test row
-    //db_insert_note("Placeholder", "Placeholder\n\nsome text");
-
-    loadview();
-
+    // db_insert_note("Placeholder", "Placeholder\n\nsome text");
     return 0;
 }
+void init_curses()
+{
+	// initialize curses
+	initscr();
+	start_color();
+	cbreak();
+	noecho();
+    nonl();
+	init_pair(1, COLOR_RED, COLOR_BLACK);
+}
 
-void loadview()
+int loadview()
 {
     // get notes
-    int num_notes;
-	db_fetch_notes(0, &notes, &num_notes);
+	if (db_fetch_notes(0, &notes, &num_notes) < 0) {
+        return -1;
+    }
 
 	// start view
 	start_main_window(notes, num_notes);
+    return 0;
 }
 
 void shutdown()
 {
     // free notes list
-    db_free_notes(notes, sizeof(notes)/sizeof(notes[0]));
+    db_free_notes(notes, num_notes);
 	db_shutdown();
 }
 
@@ -116,17 +131,6 @@ void usage()
 	printf("lok your_sqlite.db");
 }
 
-void init_curses()
-{
-	// initialize curses
-	initscr();
-	start_color();
-	cbreak();
-	noecho();
-    nonl();
-	init_pair(1, COLOR_RED, COLOR_BLACK);
-}
-
 void start_main_window(lok_item *notes, int num_notes)
 {
 	// create menu window
@@ -136,9 +140,7 @@ void start_main_window(lok_item *notes, int num_notes)
 	// create menu items
 	ITEM **items = (ITEM **) calloc(num_notes+1, sizeof(ITEM *));
 	for (int i = 0; i < num_notes; i++) {
-        char id[10];
-        sprintf(id, "%d", notes[i].id);
-		items[i] = new_item(notes[i].title, id);
+		items[i] = new_item(notes[i].title, notes[i].id);
 	}
 
 	// create menu
@@ -172,7 +174,7 @@ void start_main_window(lok_item *notes, int num_notes)
 	// process input input
 	loop(menu_win, menu);
 
-	// clean up
+	// clean up curses
 	unpost_menu(menu);
 	free_menu(menu);
 	for (int i = 0; i < num_notes; i++) {
@@ -207,7 +209,6 @@ void loop(WINDOW * menu_win, MENU * menu)
             break;
         case 'e':   // edit
             do_edit(item_index(current_item(menu)));
-            keypad(menu_win, TRUE);
             break;
 		}
 		wrefresh(menu_win);
@@ -218,17 +219,23 @@ void do_add() {
     def_prog_mode();
     endwin();
 
-    // edit
+    // add
     char *input;
-    if (editor_do(TEMP_FILE, "", &input) > 0) {
+    if (editor_do(TEMP_FILE, "", &input) < 0) {
+        // error of some kind
+        printf("Nothing added\n");
         if (!input) {
             free(input);
         }
         refresh();
+        reset_prog_mode();
         return;
     }
+    printf("Something added\n");
 
     // grab title
+    // TODO what if there's no newline?
+    // TODO generalize this (edit does it too)
     int newline = strcspn(input, "\n");
     char title[newline+1];
     strncpy(title, input, newline);
@@ -246,27 +253,40 @@ void do_edit(int index) {
     endwin();
 
     // edit
-    char *input;
-    if (editor_do(TEMP_FILE, notes[index].text, &input)) {
-        if (!input) {
-            free(input);
-        }
-        reset_prog_mode();
-        refresh();
-        return;
+    printf("Editing\n");
+    char *input = 0;
+
+    // let user perform edit
+    int edit_result = editor_do(TEMP_FILE, notes[index].text, &input);
+    if (edit_result < 0) {
+        printf("Error editing\n");
+        goto restore;
     }
+    else if (edit_result != 0) {
+        printf("Processing edit...");
+        // grab title
+        int newline = strcspn(input, "\n");
+        // TODO check if no input
+        /*
+        if (newline < 1) {
+            printf("No input");
+            char *title = "No title";
+        }
+        else {
+        */
+            char title[newline+1];
+            strncpy(title, input, newline);
+        //}
 
-    // grab title
-    int newline = strcspn(input, "\n");
-    char title[newline+1];
-    strncpy(title, input, newline);
-
-    db_edit_note(notes[index].id, title, input);
+        db_edit_note(notes[index].id, title, input);
+    }
+    // if edit_result is 0, then no change has been made.
     free(input);
 
-    // restore
-    reset_prog_mode();
+    restore:
+    // restores curses ui
     refresh();
+    reset_prog_mode();
 }
 
 // Prints text in the middle of a window, taken from ncurses docs

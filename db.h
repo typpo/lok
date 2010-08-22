@@ -5,7 +5,7 @@
 
 // info for showing things in menu
 typedef struct {
-    int id;
+    char *id;
     char *title;
     char *text;
     char *edited;
@@ -26,5 +26,5 @@ int db_fetch_notes(int limit, lok_item **buf, int *num_fetched);
 
 int db_insert_note(char *title, char *text);
 
-int db_edit_note(int id, char *title, char *text);
+int db_edit_note(char *id, char *title, char *text);
 #endif

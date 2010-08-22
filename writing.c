@@ -24,36 +24,58 @@ int editor_do(char *tmppath, char *defaulttext, char **buf)
 	system(cmd);
 
 	// read tmppath file
-	if (editor_read(tmppath, buf) < 1) {
+    long size = editor_read(tmppath, buf);
+    printf("%ld bytes edited.\n", size);
+	if (size < 1) {
         return -1;
     }
 
     // delete tmppath file
-    return remove(tmppath) == 0;
+    remove(tmppath);
+
+    // diff
+    return strcmp(defaulttext, *buf) != 0;
 }
 
 // Reads a file, returns number of bytes read, <0 on failure.
-int editor_read(char *path, char **buf)
+long editor_read(char *path, char **buf)
 {
-	FILE *f = fopen(path, "r");
+    long size = -1;
+
+	FILE *f = fopen(path, "rb");
 	if (!f) {
-		return -1;
+        perror("Error opening file");
+        goto cleanup;
 	}
 
+    // get size
 	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
+	size = ftell(f);
     if (size < 1) {
-        fclose(f);
-        return 0;
+        goto cleanup;
     }
-	fseek(f, 0, SEEK_SET);
-	*buf = (char *) malloc(size + 1);
+
+    // allocate
+	*buf = (char *) malloc(sizeof(char) * (size+1));
+    if (!buf) {
+        perror("malloc failed");
+        size = -1;
+        goto cleanup;
+    }
+
+    // load file
+    rewind(f);
 	if (size != fread(*buf, sizeof(char), size, f)) {
+        printf("Expected size of file didn't match.\n");
 		free(*buf);
-        fclose(f);
-		return -1;
+		size = -1;
+        goto cleanup;
 	}
+
+    // null terminate
+	(*buf)[size] = 0;
+
+    cleanup:
 	fclose(f);
-	*(buf + size) = 0;
 	return size;
 }

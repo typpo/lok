@@ -7,7 +7,7 @@
 
 void usage();
 
-int init();
+int loadview();
 
 void input_key(char *buf);
 
@@ -15,7 +15,9 @@ void input_key(char *buf);
 
 void shutdown();
 
-// ** UI/editing functions
+// ** DB interaction functions
+
+int init_db();
 
 void do_add();
 
