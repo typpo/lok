@@ -1,1 +1,3 @@
 Create and manage notes with vim, driven by encrypted sqlite.
+
+This is a small project to experiment with sqlite, openssl, and curses in C.
