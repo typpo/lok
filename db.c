@@ -24,7 +24,6 @@ int db_start(char *path, char *key)
 	}
 #endif
 
-	printf("Started db connection\n");
 	return 0;
 }
 

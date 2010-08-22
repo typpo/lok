@@ -7,13 +7,14 @@
 #include "db.h"
 #include "writing.h"
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-
 // maximum characters in key
 #define MAX_KEY_LEN 30
 
 // number of notes to display at once
 #define MAX_DISPLAY 50
+
+// maximum length of title, in chars
+#define MAX_TITLE_LEN 20
 
 // name of temporary file for read/writes
 #define TEMP_FILE "tmp"
@@ -21,7 +22,7 @@
 // passkey
 char key[MAX_KEY_LEN];
 
-// stored notes
+// stored notes information
 lok_item *notes;
 int num_notes;
 
@@ -33,19 +34,27 @@ int main(int argc, char **argv)
 	   return 1;
 	   }
 	 */
+
+	// Initialize backend
+	// TODO use command line arg
+	if (init_db("test.db")) {
+        printf("DB connection failed.\n");
+		return 1;
+    }
+    printf("DB connection success.\n");
+
+	// Start curses
+	init_curses();
 	// get key
 //    printw("Enter your key: ");
 //    refresh();
 //    input_key(key);
-
-	// Initialize backend
-	// TODO use command line arg
-	if (init_db("test.db"))
-		return -1;
-
-	// Start UI
-	init_curses();
-	loadview();
+	
+    // Start UI
+    if (loadview()) {
+        printf("Loading notes failed.\n");
+        return 1;
+    }
 
 	// Finish
 	shutdown();
@@ -84,6 +93,8 @@ int loadview()
 	if (db_fetch_notes(0, &notes, &num_notes) < 0) {
 		return -1;
 	}
+    printf("Loaded %d notes.\n", num_notes);
+
 	// start view
 	start_main_window(notes, num_notes);
 	return 0;
@@ -224,7 +235,6 @@ void do_add()
 	char *input;
 	if (editor_do(TEMP_FILE, "", &input) < 0) {
 		// error of some kind
-		printf("Nothing added\n");
 		if (!input) {
 			free(input);
 		}
@@ -232,14 +242,10 @@ void do_add()
 		reset_prog_mode();
 		return;
 	}
-	printf("Something added\n");
 
-	// grab title
-	// TODO what if there's no newline?
-	// TODO generalize this (edit does it too)
-	int newline = strcspn(input, "\n");
-	char title[newline + 1];
-	strncpy(title, input, newline);
+    // read title
+    char title[MAX_TITLE_LEN];
+    titleFromInput(input, title, MAX_TITLE_LEN);
 
 	db_insert_note(title, input);
 	free(input);
@@ -255,30 +261,18 @@ void do_edit(int index)
 	endwin();
 
 	// edit
-	printf("Editing\n");
 	char *input = 0;
 
 	// let user perform edit
 	int edit_result = editor_do(TEMP_FILE, notes[index].text, &input);
 	if (edit_result < 0) {
-		printf("Error editing\n");
 		goto restore;
 	} else if (edit_result != 0) {
-		printf("Processing edit...");
-		// grab title
-		int newline = strcspn(input, "\n");
-		// TODO check if no input
-		/*
-		   if (newline < 1) {
-		   printf("No input");
-		   char *title = "No title";
-		   }
-		   else {
-		 */
-		char title[newline + 1];
-		strncpy(title, input, newline);
-		//}
+        // read title
+        char title[MAX_TITLE_LEN];
+        titleFromInput(input, title, MAX_TITLE_LEN);
 
+        // write to db
 		db_edit_note(notes[index].id, title, input);
 	}
 	// if edit_result is 0, then no change has been made.
@@ -288,6 +282,15 @@ void do_edit(int index)
 	// restores curses ui
 	refresh();
 	reset_prog_mode();
+}
+
+// Takes the first line from input and puts it in title, for a maximum of 
+// len characters
+void titleFromInput(char *input, char *title, int len)
+{
+	// TODO what if there's no newline?
+	int newline = strcspn(input, "\n");
+	strncpy(title, input, newline < len ? newline : len);
 }
 
 // Prints text in the middle of a window, taken from ncurses docs

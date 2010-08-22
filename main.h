@@ -23,6 +23,8 @@ void do_add();
 
 void do_edit(int index);
 
+void titleFromInput(char *input, char *title, int len);
+
 // ** curses functions
 void init_curses();
 
