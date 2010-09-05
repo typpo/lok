@@ -27,6 +27,12 @@ char key[MAX_KEY_LEN];
 lok_item *notes;
 int num_notes;
 
+// Keeps track of stored menu items
+int num_menu_items = 0;
+
+// Window for the notes menu
+WINDOW *menu_window;
+
 int main(int argc, char **argv)
 {
 	/*
@@ -58,6 +64,7 @@ int main(int argc, char **argv)
 	start_main_window(notes, num_notes);
 
 	// Finish
+	endwin();
 	shutdown();
 
 	return 0;
@@ -138,23 +145,18 @@ void input_key(char *buf)
 void start_main_window(lok_item * notes, int num_notes)
 {
 	// create menu window
-	WINDOW *menu_win = newwin(24, 80, 0, 0);
-	keypad(menu_win, TRUE);
+	menu_window = newwin(24, 80, 0, 0);
+	keypad(menu_window, TRUE);
 
-	// create menu items
-	ITEM **items = (ITEM **) calloc(num_notes, sizeof(ITEM *));
-	for (int i=0; i < num_notes; i++) {
-		items[i] = new_item(notes[i].title, notes[i].id);
-	}
-
-	// create menu
-	MENU *menu = new_menu((ITEM **) items);
+    // Build menu
+    MENU *menu;
+    ITEM **items = create_menu(&menu);
 
 	// set menu main window and subwindow
-	set_menu_win(menu, menu_win);
+	set_menu_win(menu, menu_window);
 
 	// menu subwin height, width, and y,x coords
-	set_menu_sub(menu, derwin(menu_win, 20, 78, 3, 1));
+	set_menu_sub(menu, derwin(menu_window, 20, 78, 3, 1));
 
 	// number of lines to show in menu, row to start al
 	// keep height menu subwin height - 1
@@ -164,29 +166,55 @@ void start_main_window(lok_item * notes, int num_notes)
 	set_menu_mark(menu, " * ");
 
 	// print border
-	box(menu_win, 0, 0);
+	box(menu_window, 0, 0);
 
 	// print heading
-	print_centered(menu_win, 1, 0, 80, "lok", COLOR_PAIR(1));
-	mvwhline(menu_win, 2, 1, ACS_HLINE, 78);
+	print_centered(menu_window, 1, 0, 80, "lok", COLOR_PAIR(1));
+	mvwhline(menu_window, 2, 1, ACS_HLINE, 78);
 
-	// show menu
+    // Show everything
 	post_menu(menu);
-	wrefresh(menu_win);
+	wrefresh(menu_window);
 	refresh();
 
 	// Process user input. This call will block for the duration
     // of the program.
-	loop(menu_win, menu);
+	loop(menu_window, menu);
+    
+    // Free memory allocated to menu
+    clear_menu(menu, items);
+}
 
-	// clean up curses
+// Creates and posts a menu from current notes references, returning the list 
+// of menu items allocated.
+ITEM **create_menu(MENU **menu)
+{
+	// create menu items
+	ITEM **items = (ITEM **)calloc(num_notes+1, sizeof(ITEM *));
+    num_menu_items = num_notes;
+
+	for (int i=0; i < num_notes; i++) {
+		items[i] = new_item(notes[i].title, notes[i].id);
+	}
+    items[num_notes] = (ITEM *)NULL;
+    
+	// create menu
+	*menu = new_menu(items);
+    return items;
+}
+
+// Frees everything associated with the notes list.
+void clear_menu(MENU *menu, ITEM **items)
+{
+    // kill the menu
 	unpost_menu(menu);
 	free_menu(menu);
-	for (int i=0; i < num_notes; i++) {
+
+    // free all the menu items
+	for (int i=0; i < num_menu_items; i++) {
 		free_item(items[i]);
 	}
 	free(items);
-	endwin();
 }
 
 // Loads notes from db into menu, clearing old menu.
@@ -213,11 +241,11 @@ int load_notes()
 
 // Loop for processing user input.
 // Blocks for the duration of the program.
-void loop(WINDOW * menu_win, MENU * menu)
+void loop(WINDOW * menu_window, MENU * menu)
 {
 	int c;
     int index;
-	while ((c = wgetch(menu_win)) != 'q') {
+	while ((c = wgetch(menu_window)) != 'q') {
 		switch (c) {
 		case KEY_DOWN:
 		case 'j':
@@ -243,7 +271,7 @@ void loop(WINDOW * menu_win, MENU * menu)
             }
 			break;
 		}
-		wrefresh(menu_win);
+		wrefresh(menu_window);
 	}
 }
 

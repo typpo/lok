@@ -32,6 +32,10 @@ void init_curses();
 
 void start_main_window(lok_item *notes, int num_notes);
 
+ITEM **create_menu(MENU **menu);
+
+void clear_menu(MENU *menu, ITEM **items);
+
 void loop(WINDOW * menu_win, MENU * menu);
 
 void print_centered(WINDOW * win, int starty, int startx, int width,
