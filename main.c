@@ -48,23 +48,22 @@ int main(int argc, char **argv)
 
 	// Start curses
 	init_curses();
+
 	// get key
     // printw("Enter your key: ");
     // refresh();
     // input_key(key);
 	
 	// start view
-    if (load_notes()) {
-        printf("db loading failed.\n");
-        return 1;
-    }
-	start_main_window(notes, num_notes);
+    int retval = 0;
+	if (start_main_window(notes, num_notes))
+       retval = 1; 
 
 	// Finish
 	endwin();
 	shutdown();
 
-	return 0;
+	return retval;
 }
 
 // Prints complex instructions on how to use this program.
@@ -139,40 +138,25 @@ void input_key(char *buf)
 
 // Loads the notes view in the curses display.
 // Blocks for the duration of the program.
-void start_main_window()
+int start_main_window()
 {
 	// create menu window
 	WINDOW *menu_window = newwin(24, 80, 0, 0);
     menu_handle.window = menu_window;
-	keypad(menu_window, TRUE);
 
-    // Build menu
-    create_menu();
-    MENU *menu = menu_handle.menu;
+    if (load_notes()) {
+        printf("db loading failed.\n");
+        return 1;
+    }
 
-	// set menu main window and subwindow
-	set_menu_win(menu, menu_window);
-
-	// menu subwin height, width, and y,x coords
-	set_menu_sub(menu, derwin(menu_window, 20, 78, 3, 1));
-
-	// number of lines to show in menu, row to start al
-	// keep height menu subwin height - 1
-	set_menu_format(menu, 19, 1);
-
-	// menu mark 
-	set_menu_mark(menu, " * ");
-
-	// print border
+	// print ui border
 	box(menu_window, 0, 0);
 
-	// print heading
+	// print program heading
 	print_centered(menu_window, 1, 0, 80, "lok", COLOR_PAIR(1));
 	mvwhline(menu_window, 2, 1, ACS_HLINE, 78);
 
     // Show everything
-	post_menu(menu);
-	wrefresh(menu_window);
 	refresh();
 
 	// Process user input. This call will block for the duration
@@ -181,6 +165,8 @@ void start_main_window()
     
     // Free memory allocated to menu
     clear_menu();
+
+    return 0;
 }
 
 // Creates and posts a menu from current notes references, returning the list 
@@ -197,8 +183,30 @@ void create_menu()
     items[num_notes] = (ITEM *)NULL;
     
 	// create menu
-    menu_handle.menu = new_menu(items); 
+    MENU *menu = new_menu(items); 
+    WINDOW *menu_window = menu_handle.window;
+    menu_handle.menu = menu;
     menu_handle.items = items;
+
+    // ...and put it in the UI
+
+	// set menu main window and subwindow
+	set_menu_win(menu, menu_window);
+
+	// menu subwin height, width, and y,x coords
+	set_menu_sub(menu, derwin(menu_window, 20, 78, 3, 1));
+
+	// number of lines to show in menu, row to start at
+	// keep height menu subwin height - 1
+	set_menu_format(menu, 19, 1);
+
+	// selected item mark
+	set_menu_mark(menu, " * ");
+
+    // make it visibile/interactible
+	keypad(menu_window, TRUE);
+	post_menu(menu);
+	wrefresh(menu_window);
 }
 
 // Frees everything associated with the notes list.
@@ -223,7 +231,7 @@ int reload_notes()
 {
     // clear old notes and menu
 	db_free_notes(notes, num_notes);
-    // TODO clear menu
+    clear_menu();
 
     // get notes
     return load_notes();
@@ -237,6 +245,7 @@ int load_notes()
         printf("Couldn't get notes from db.\n");
 		return 1;
 	}
+    create_menu();
     return 0;
 }
 
@@ -304,6 +313,7 @@ void do_add()
 	db_insert_note(title, input);
 	free(input);
 
+    reload_notes();
 	refresh();
 	reset_prog_mode();
 }
@@ -330,6 +340,7 @@ void do_edit(int index)
 
         // write to db
 		db_edit_note(notes[index].id, title, input);
+        reload_notes();
 	}
 	// if edit_result is 0, then no change has been made.
 	free(input);

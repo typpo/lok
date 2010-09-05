@@ -40,7 +40,7 @@ int reload_notes();
 // ** curses functions
 void init_curses();
 
-void start_main_window();
+int start_main_window();
 
 void create_menu();
 
