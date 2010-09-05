@@ -36,13 +36,12 @@ int main(int argc, char **argv)
 	   }
 	 */
 
-	// Initialize backend
+	// Initialize connection to backend
 	// TODO use command line arg
 	if (init_db("test.db")) {
-        printf("DB connection failed.\n");
+        printf("db connection failed.\n");
 		return 1;
     }
-    printf("db connection success.\n");
 
 	// Start curses
 	init_curses();
@@ -51,13 +50,11 @@ int main(int argc, char **argv)
     // refresh();
     // input_key(key);
 	
-	// get notes
-	if (db_fetch_notes(0, &notes, &num_notes)) {
-        printf("Couldn't get notes from db.\n");
-		return 1;
-	}
-
 	// start view
+    if (load_notes()) {
+        printf("db loading failed.\n");
+        return 1;
+    }
 	start_main_window(notes, num_notes);
 
 	// Finish
@@ -100,7 +97,6 @@ void init_curses()
 // Frees the notes list and closes the connection to the database.
 void shutdown()
 {
-	// free notes list
 	db_free_notes(notes, num_notes);
 	db_shutdown();
 }
@@ -146,8 +142,8 @@ void start_main_window(lok_item * notes, int num_notes)
 	keypad(menu_win, TRUE);
 
 	// create menu items
-	ITEM **items = (ITEM **) calloc(num_notes + 1, sizeof(ITEM *));
-	for (int i = 0; i < num_notes; i++) {
+	ITEM **items = (ITEM **) calloc(num_notes, sizeof(ITEM *));
+	for (int i=0; i < num_notes; i++) {
 		items[i] = new_item(notes[i].title, notes[i].id);
 	}
 
@@ -186,11 +182,33 @@ void start_main_window(lok_item * notes, int num_notes)
 	// clean up curses
 	unpost_menu(menu);
 	free_menu(menu);
-	for (int i = 0; i < num_notes; i++) {
+	for (int i=0; i < num_notes; i++) {
 		free_item(items[i]);
 	}
 	free(items);
 	endwin();
+}
+
+// Loads notes from db into menu, clearing old menu.
+int reload_notes()
+{
+    // clear old notes and menu
+	db_free_notes(notes, num_notes);
+    // TODO clear menu
+
+    // get notes
+    return load_notes();
+}
+
+// Loads notes from db into menu.
+// Returns 0 on success.
+int load_notes()
+{
+	if (db_fetch_notes(0, &notes, &num_notes)) {
+        printf("Couldn't get notes from db.\n");
+		return 1;
+	}
+    return 0;
 }
 
 // Loop for processing user input.
@@ -247,9 +265,9 @@ void do_add()
 		return;
 	}
 
-    // read title
-    char title[MAX_TITLE_LEN];
-    titleFromInput(input, title, MAX_TITLE_LEN);
+    // read title; leave room for null terminator
+    char title[MAX_TITLE_LEN+1];
+    titleFromInput(input, title);
 
 	db_insert_note(title, input);
 	free(input);
@@ -266,7 +284,7 @@ void do_edit(int index)
 	endwin();
 
 	// edit
-	char *input = 0;
+	char *input;
 
 	// let user perform edit
     printf("Editing %d\n", index);
@@ -274,9 +292,9 @@ void do_edit(int index)
 	if (edit_result < 0) {
 		goto restore;
 	} else if (edit_result != 0) {
-        // read title
-        char title[MAX_TITLE_LEN];
-        titleFromInput(input, title, MAX_TITLE_LEN);
+        // read title; leave room for null terminator
+        char title[MAX_TITLE_LEN+1];
+        titleFromInput(input, title);
 
         // write to db
 		db_edit_note(notes[index].id, title, input);
@@ -292,11 +310,17 @@ void do_edit(int index)
 
 // Takes the first line from input and puts it in title, for a maximum of 
 // len characters.
-void titleFromInput(char *input, char *title, int len)
+void titleFromInput(char *input, char *title)
 {
-	// TODO what if there's no newline?
+	// Get newline. If there's no newline, get the length of the string.
 	int newline = strcspn(input, "\n");
-	strncpy(title, input, newline < len ? newline : len);
+
+    // index to end title at.
+    int term = newline < MAX_TITLE_LEN ? newline : MAX_TITLE_LEN;
+    // leave room for null terminator
+	strncpy(title, input, term);
+    title[term] = 0;
+
 }
 
 // Prints text in the middle of a window.

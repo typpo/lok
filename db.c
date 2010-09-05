@@ -84,7 +84,7 @@ int db_edit_note(char *id, char *title, char *text)
 	return ret;
 }
 
-// Reads notes from the database into memory. Note that this allocates 
+// Reads n notes from the database into memory. Note that this allocates 
 // memory for buf that must be freed later.
 // Returns 0 on success, -1 on failure.
 int db_fetch_notes(int limit, lok_item ** buf, int *num_notes)

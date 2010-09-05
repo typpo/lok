@@ -21,7 +21,11 @@ void do_add();
 
 void do_edit(int index);
 
-void titleFromInput(char *input, char *title, int len);
+void titleFromInput(char *input, char *title);
+
+int load_notes();
+
+int reload_notes();
 
 // ** curses functions
 void init_curses();
