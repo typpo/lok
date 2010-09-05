@@ -24,14 +24,11 @@
 char key[MAX_KEY_LEN];
 
 // Stored notes information
-lok_item *notes;
+lok_item_t *notes;
 int num_notes;
 
-// Keeps track of stored menu items
-int num_menu_items = 0;
-
-// Window for the notes menu
-WINDOW *menu_window;
+// Notes menu references
+menu_handle_t menu_handle;
 
 int main(int argc, char **argv)
 {
@@ -142,15 +139,16 @@ void input_key(char *buf)
 
 // Loads the notes view in the curses display.
 // Blocks for the duration of the program.
-void start_main_window(lok_item * notes, int num_notes)
+void start_main_window()
 {
 	// create menu window
-	menu_window = newwin(24, 80, 0, 0);
+	WINDOW *menu_window = newwin(24, 80, 0, 0);
+    menu_handle.window = menu_window;
 	keypad(menu_window, TRUE);
 
     // Build menu
-    MENU *menu;
-    ITEM **items = create_menu(&menu);
+    create_menu();
+    MENU *menu = menu_handle.menu;
 
 	// set menu main window and subwindow
 	set_menu_win(menu, menu_window);
@@ -179,19 +177,19 @@ void start_main_window(lok_item * notes, int num_notes)
 
 	// Process user input. This call will block for the duration
     // of the program.
-	loop(menu_window, menu);
+	loop();
     
     // Free memory allocated to menu
-    clear_menu(menu, items);
+    clear_menu();
 }
 
 // Creates and posts a menu from current notes references, returning the list 
 // of menu items allocated.
-ITEM **create_menu(MENU **menu)
+void create_menu()
 {
 	// create menu items
 	ITEM **items = (ITEM **)calloc(num_notes+1, sizeof(ITEM *));
-    num_menu_items = num_notes;
+    menu_handle.num_items = num_notes;
 
 	for (int i=0; i < num_notes; i++) {
 		items[i] = new_item(notes[i].title, notes[i].id);
@@ -199,19 +197,22 @@ ITEM **create_menu(MENU **menu)
     items[num_notes] = (ITEM *)NULL;
     
 	// create menu
-	*menu = new_menu(items);
-    return items;
+    menu_handle.menu = new_menu(items); 
+    menu_handle.items = items;
 }
 
 // Frees everything associated with the notes list.
-void clear_menu(MENU *menu, ITEM **items)
+void clear_menu()
 {
+    MENU *menu = menu_handle.menu;
+    ITEM **items = menu_handle.items;
+
     // kill the menu
 	unpost_menu(menu);
 	free_menu(menu);
 
     // free all the menu items
-	for (int i=0; i < num_menu_items; i++) {
+	for (int i=0; i < menu_handle.num_items; i++) {
 		free_item(items[i]);
 	}
 	free(items);
@@ -241,9 +242,12 @@ int load_notes()
 
 // Loop for processing user input.
 // Blocks for the duration of the program.
-void loop(WINDOW * menu_window, MENU * menu)
+void loop()
 {
-	int c;
+    WINDOW *menu_window = menu_handle.window;
+    MENU *menu = menu_handle.menu;
+
+    int c;
     int index;
 	while ((c = wgetch(menu_window)) != 'q') {
 		switch (c) {

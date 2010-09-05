@@ -87,7 +87,7 @@ int db_edit_note(char *id, char *title, char *text)
 // Reads n notes from the database into memory. Note that this allocates 
 // memory for buf that must be freed later.
 // Returns 0 on success, -1 on failure.
-int db_fetch_notes(int limit, lok_item ** buf, int *num_notes)
+int db_fetch_notes(int limit, lok_item_t ** buf, int *num_notes)
 {
 	sqlite3_stmt *stmt;
 	// TODO make limit 50 a constant, possibly change order to added
@@ -97,7 +97,7 @@ int db_fetch_notes(int limit, lok_item ** buf, int *num_notes)
 		return -1;
 	}
 
-	lok_item *ptr = malloc(50 * sizeof(lok_item));
+	lok_item_t *ptr = malloc(50 * sizeof(lok_item_t));
 	*buf = ptr;
 	int i;
 	// walk through each row in results
@@ -139,7 +139,7 @@ int db_fetch_notes(int limit, lok_item ** buf, int *num_notes)
 }
 
 // frees 2d array of chars, which is how notes are recorded by fetch_notes
-void db_free_notes(lok_item * buf, int num_items)
+void db_free_notes(lok_item_t * buf, int num_items)
 {
 	for (int i = 0; i < num_items; i++) {
 		free(buf[i].id);

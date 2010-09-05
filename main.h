@@ -1,7 +1,17 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <curses.h>
+#include <menu.h>
 #include "db.h"
+
+// menu references
+typedef struct {
+    MENU *menu;
+    WINDOW *window;
+    ITEM **items;
+    int num_items;
+} menu_handle_t;
 
 // ** Startup functions
 
@@ -30,13 +40,13 @@ int reload_notes();
 // ** curses functions
 void init_curses();
 
-void start_main_window(lok_item *notes, int num_notes);
+void start_main_window();
 
-ITEM **create_menu(MENU **menu);
+void create_menu();
 
-void clear_menu(MENU *menu, ITEM **items);
+void clear_menu();
 
-void loop(WINDOW * menu_win, MENU * menu);
+void loop();
 
 void print_centered(WINDOW * win, int starty, int startx, int width,
 		     char *string, chtype color);
