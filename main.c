@@ -204,6 +204,9 @@ void create_menu()
 	set_menu_mark(menu, " * ");
 
     // make it visibile/interactible
+    if (num_notes > 0) {
+        set_current_item(menu, items[0]);
+    }
 	keypad(menu_window, TRUE);
 	post_menu(menu);
 	wrefresh(menu_window);
@@ -254,11 +257,11 @@ int load_notes()
 void loop()
 {
     WINDOW *menu_window = menu_handle.window;
-    MENU *menu = menu_handle.menu;
 
     int c;
     int index;
 	while ((c = wgetch(menu_window)) != 'q') {
+        MENU *menu = menu_handle.menu;
 		switch (c) {
 		case KEY_DOWN:
 		case 'j':
