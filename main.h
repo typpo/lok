@@ -17,7 +17,7 @@ typedef struct {
 
 void usage();
 
-void input_key(char *buf);
+char *input_key();
 
 // ** Shutdown functions
 

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <curses.h>
 #include <menu.h>
+#include <openssl/sha.h>
 #include "main.h"
 #include "db.h"
 #include "writing.h"
@@ -50,9 +51,15 @@ int main(int argc, char **argv)
 	init_curses();
 
 	// get key
-    // printw("Enter your key: ");
-    // refresh();
-    // input_key(key);
+    printw("Enter your key: ");
+    refresh();
+    char *key = input_key();
+
+    //temp
+    printf("SHA key: %s\n", key);
+    endwin();
+    shutdown();
+    return 0;
 	
 	// start view
     int retval = 0;
@@ -105,14 +112,15 @@ void shutdown()
 }
 
 // Reads user input while hiding what the user types.
-// Used for password input.
-void input_key(char *buf)
+// Computes SHA1 digest of input, allocates memory, and returns.
+char *input_key()
 {
 	char key;
-	char *ptr = buf;
-	char *max = buf + MAX_KEY_LEN - 1;
+    char plaintext[MAX_KEY_LEN+1];
+	char *ptr = plaintext;
+    int len = 0;
 	do {
-		if (ptr >= max) {
+		if (len >= MAX_KEY_LEN) {
 			printf("\nReached key maximum\n");
 			break;
 		}
@@ -121,19 +129,35 @@ void input_key(char *buf)
 		switch (key) {
 		case (char) KEY_BACKSPACE:
 			// backspace
-			if (ptr > buf) {
+			if (ptr > plaintext) {
 				*(--ptr) = 0;
+                len--;
 			}
 			break;
 		default:
 			if (key > 31 && key < 127) {
 				*(ptr++) = key;
+                len++;
 			}
 		}
 	} while (key != '\n');
 	*ptr = 0;
+#ifdef NO_CRYPTO
+    char *ret = malloc(sizeof(char)*(MAX_KEY_LEN+1));
+    strncpy(ret, plaintext, MAX_KEY_LEN);
+    return ret;
+#else
+	// Hash the key and get rid of the plaintext one
+    char *digest = malloc(SHA_DIGEST_LENGTH);
+    if (!digest) {
+        perror("couldn't malloc for sha digest");
+        return NULL;
+    }
 
-	// TODO hash the key and get rid of the plaintext one
+    SHA1((unsigned char*)plaintext, len, (unsigned char*)digest);
+    memset(plaintext, 0, MAX_KEY_LEN);
+    return digest;
+#endif
 }
 
 // Loads the notes view in the curses display.
