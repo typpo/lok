@@ -33,130 +33,130 @@ menu_handle_t menu_handle;
 
 int main(int argc, char **argv)
 {
-	/*
-	   if (argc != 2) {
-	   usage();
-	   return 1;
-	   }
-	 */
+  /*
+     if (argc != 2) {
+     usage();
+     return 1;
+     }
+     */
 
-	// Initialize connection to backend
-	// TODO use command line arg
-	if (init_db("test.db")) {
-        printf("db connection failed.\n");
-		return 1;
-    }
+  // Initialize connection to backend
+  // TODO use command line arg
+  if (init_db("test.db")) {
+    printf("db connection failed.\n");
+    return 1;
+  }
 
-	// Start curses
-	init_curses();
+  // Start curses
+  init_curses();
 
-	// get key
-    printw("Enter your key: ");
-    refresh();
-    char *key = input_key();
+  // get key
+  printw("Enter your key: ");
+  refresh();
+  char *key = input_key();
 
-    //temp
-    printf("SHA key: %s\n", key);
-    endwin();
-    shutdown();
-    return 0;
-	
-	// start view
-    int retval = 0;
-	if (start_main_window(notes, num_notes))
-       retval = 1; 
+  //temp
+  printf("SHA key: %s\n", key);
+  endwin();
+  shutdown();
+  return 0;
 
-	// Finish
-	endwin();
-	shutdown();
+  // start view
+  int retval = 0;
+  if (start_main_window(notes, num_notes))
+    retval = 1;
 
-	return retval;
+  // Finish
+  endwin();
+  shutdown();
+
+  return retval;
 }
 
 // Prints complex instructions on how to use this program.
 void usage()
 {
-	printf("lok your_sqlite.db");
+  printf("lok your_sqlite.db");
 }
 
 // Establishes a connection a specified sqlite database and makes sure the
 // notes table exists.
 int init_db(char *dbfile)
 {
-	// connect to db
-	if (db_start(dbfile, "testkey") < 0) {
-		return 1;
-	}
-	// make sure table exists
-	db_create_table();
+  // connect to db
+  if (db_start(dbfile, "testkey") < 0) {
+    return 1;
+  }
+  // make sure table exists
+  db_create_table();
 
-	return 0;
+  return 0;
 }
 
 // Starts the curses environment.
 void init_curses()
 {
-	initscr();
-	start_color();
-	cbreak();
-	noecho();
-	nonl();
-	init_pair(1, COLOR_RED, COLOR_BLACK);
+  initscr();
+  start_color();
+  cbreak();
+  noecho();
+  nonl();
+  init_pair(1, COLOR_RED, COLOR_BLACK);
 }
 
 // Frees the notes list and closes the connection to the database.
 void shutdown()
 {
-	db_free_notes(notes, num_notes);
-	db_shutdown();
+  db_free_notes(notes, num_notes);
+  db_shutdown();
 }
 
 // Reads user input while hiding what the user types.
 // Computes SHA1 digest of input, allocates memory, and returns.
 char *input_key()
 {
-	char key;
-    char plaintext[MAX_KEY_LEN+1];
-	char *ptr = plaintext;
-    int len = 0;
-	do {
-		if (len >= MAX_KEY_LEN) {
-			printf("\nReached key maximum\n");
-			break;
-		}
-
-		key = getch();
-		switch (key) {
-		case (char) KEY_BACKSPACE:
-			// backspace
-			if (ptr > plaintext) {
-				*(--ptr) = 0;
-                len--;
-			}
-			break;
-		default:
-			if (key > 31 && key < 127) {
-				*(ptr++) = key;
-                len++;
-			}
-		}
-	} while (key != '\n');
-	*ptr = 0;
-#ifdef NO_CRYPTO
-    char *ret = malloc(sizeof(char)*(MAX_KEY_LEN+1));
-    strncpy(ret, plaintext, MAX_KEY_LEN);
-    return ret;
-#else
-	// Hash the key and get rid of the plaintext one
-    char *digest = malloc(SHA_DIGEST_LENGTH);
-    if (!digest) {
-        perror("couldn't malloc for sha digest");
-        return NULL;
+  char key;
+  char plaintext[MAX_KEY_LEN+1];
+  char *ptr = plaintext;
+  int len = 0;
+  do {
+    if (len >= MAX_KEY_LEN) {
+      printf("\nReached key maximum\n");
+      break;
     }
 
-    SHA1((unsigned char*)plaintext, len, (unsigned char*)digest);
-    memset(plaintext, 0, MAX_KEY_LEN);
-    return digest;
+    key = getch();
+    switch (key) {
+      case (char) KEY_BACKSPACE:
+        // backspace
+        if (ptr > plaintext) {
+          *(--ptr) = 0;
+          len--;
+        }
+        break;
+      default:
+        if (key > 31 && key < 127) {
+          *(ptr++) = key;
+          len++;
+        }
+    }
+  } while (key != '\n');
+  *ptr = 0;
+#ifdef NO_CRYPTO
+  char *ret = malloc(sizeof(char)*(MAX_KEY_LEN+1));
+  strncpy(ret, plaintext, MAX_KEY_LEN);
+  return ret;
+#else
+  // Hash the key and get rid of the plaintext one
+  char *digest = malloc(SHA_DIGEST_LENGTH);
+  if (!digest) {
+    perror("couldn't malloc for sha digest");
+    return NULL;
+  }
+
+  SHA1((unsigned char*)plaintext, len, (unsigned char*)digest);
+  memset(plaintext, 0, MAX_KEY_LEN);
+  return digest;
 #endif
 }
 
@@ -164,258 +164,258 @@ char *input_key()
 // Blocks for the duration of the program.
 int start_main_window()
 {
-	// create menu window
-	WINDOW *menu_window = newwin(24, 80, 0, 0);
-    menu_handle.window = menu_window;
+  // create menu window
+  WINDOW *menu_window = newwin(24, 80, 0, 0);
+  menu_handle.window = menu_window;
 
-    if (load_notes()) {
-        printf("db loading failed.\n");
-        return 1;
-    }
+  if (load_notes()) {
+    printf("db loading failed.\n");
+    return 1;
+  }
 
-	// print ui border
-	box(menu_window, 0, 0);
+  // print ui border
+  box(menu_window, 0, 0);
 
-	// print program heading
-	print_centered(menu_window, 1, 0, 80, "lok", COLOR_PAIR(1));
-	mvwhline(menu_window, 2, 1, ACS_HLINE, 78);
+  // print program heading
+  print_centered(menu_window, 1, 0, 80, "lok", COLOR_PAIR(1));
+  mvwhline(menu_window, 2, 1, ACS_HLINE, 78);
 
-    // Show everything
-	refresh();
+  // Show everything
+  refresh();
 
-	// Process user input. This call will block for the duration
-    // of the program.
-	loop();
-    
-    // Free memory allocated to menu
-    clear_menu();
+  // Process user input. This call will block for the duration
+  // of the program.
+  loop();
 
-    return 0;
+  // Free memory allocated to menu
+  clear_menu();
+
+  return 0;
 }
 
-// Creates and posts a menu from current notes references, returning the list 
+// Creates and posts a menu from current notes references, returning the list
 // of menu items allocated.
 void create_menu()
 {
-	// create menu items
-	ITEM **items = (ITEM **)calloc(num_notes+1, sizeof(ITEM *));
-    menu_handle.num_items = num_notes;
+  // create menu items
+  ITEM **items = (ITEM **)calloc(num_notes+1, sizeof(ITEM *));
+  menu_handle.num_items = num_notes;
 
-	for (int i=0; i < num_notes; i++) {
-		items[i] = new_item(notes[i].title, notes[i].id);
-	}
-    items[num_notes] = (ITEM *)NULL;
-    
-	// create menu
-    MENU *menu = new_menu(items); 
-    WINDOW *menu_window = menu_handle.window;
-    menu_handle.menu = menu;
-    menu_handle.items = items;
+  for (int i=0; i < num_notes; i++) {
+    items[i] = new_item(notes[i].title, notes[i].id);
+  }
+  items[num_notes] = (ITEM *)NULL;
 
-    // ...and put it in the UI
+  // create menu
+  MENU *menu = new_menu(items);
+  WINDOW *menu_window = menu_handle.window;
+  menu_handle.menu = menu;
+  menu_handle.items = items;
 
-	// set menu main window and subwindow
-	set_menu_win(menu, menu_window);
+  // ...and put it in the UI
 
-	// menu subwin height, width, and y,x coords
-	set_menu_sub(menu, derwin(menu_window, 20, 78, 3, 1));
+  // set menu main window and subwindow
+  set_menu_win(menu, menu_window);
 
-	// number of lines to show in menu, row to start at
-	// keep height menu subwin height - 1
-	set_menu_format(menu, 19, 1);
+  // menu subwin height, width, and y,x coords
+  set_menu_sub(menu, derwin(menu_window, 20, 78, 3, 1));
 
-	// selected item mark
-	set_menu_mark(menu, " * ");
+  // number of lines to show in menu, row to start at
+  // keep height menu subwin height - 1
+  set_menu_format(menu, 19, 1);
 
-    // make it visibile/interactible
-    if (num_notes > 0) {
-        set_current_item(menu, items[0]);
-    }
-	keypad(menu_window, TRUE);
-	post_menu(menu);
-	wrefresh(menu_window);
+  // selected item mark
+  set_menu_mark(menu, " * ");
+
+  // make it visibile/interactible
+  if (num_notes > 0) {
+    set_current_item(menu, items[0]);
+  }
+  keypad(menu_window, TRUE);
+  post_menu(menu);
+  wrefresh(menu_window);
 }
 
 // Frees everything associated with the notes list.
 void clear_menu()
 {
-    MENU *menu = menu_handle.menu;
-    ITEM **items = menu_handle.items;
+  MENU *menu = menu_handle.menu;
+  ITEM **items = menu_handle.items;
 
-    // kill the menu
-	unpost_menu(menu);
-	free_menu(menu);
+  // kill the menu
+  unpost_menu(menu);
+  free_menu(menu);
 
-    // free all the menu items
-	for (int i=0; i < menu_handle.num_items; i++) {
-		free_item(items[i]);
-	}
-	free(items);
+  // free all the menu items
+  for (int i=0; i < menu_handle.num_items; i++) {
+    free_item(items[i]);
+  }
+  free(items);
 }
 
 // Loads notes from db into menu, clearing old menu.
 int reload_notes()
 {
-    // clear old notes and menu
-	db_free_notes(notes, num_notes);
-    clear_menu();
+  // clear old notes and menu
+  db_free_notes(notes, num_notes);
+  clear_menu();
 
-    // get notes
-    return load_notes();
+  // get notes
+  return load_notes();
 }
 
 // Loads notes from db into menu.
 // Returns 0 on success.
 int load_notes()
 {
-	if (db_fetch_notes(0, &notes, &num_notes)) {
-        printf("Couldn't get notes from db.\n");
-		return 1;
-	}
-    create_menu();
-    return 0;
+  if (db_fetch_notes(0, &notes, &num_notes)) {
+    printf("Couldn't get notes from db.\n");
+    return 1;
+  }
+  create_menu();
+  return 0;
 }
 
 // Loop for processing user input.
 // Blocks for the duration of the program.
 void loop()
 {
-    WINDOW *menu_window = menu_handle.window;
+  WINDOW *menu_window = menu_handle.window;
 
-    int c;
-    int index;
-	while ((c = wgetch(menu_window)) != 'q') {
-        MENU *menu = menu_handle.menu;
-		switch (c) {
-		case KEY_DOWN:
-		case 'j':
-			menu_driver(menu, REQ_DOWN_ITEM);
-			break;
-		case KEY_UP:
-		case 'k':
-			menu_driver(menu, REQ_UP_ITEM);
-			break;
-		case KEY_NPAGE:
-			menu_driver(menu, REQ_SCR_DPAGE);
-			break;
-		case KEY_PPAGE:
-			menu_driver(menu, REQ_SCR_UPAGE);
-			break;
-		case 'a':	// add
-			do_add();
-			break;
-		case 'e':	// edit
-            index = item_index(current_item(menu));
-            if (index > -1) {
-                do_edit(index);
-            }
-			break;
-		}
-		wrefresh(menu_window);
-	}
+  int c;
+  int index;
+  while ((c = wgetch(menu_window)) != 'q') {
+    MENU *menu = menu_handle.menu;
+    switch (c) {
+      case KEY_DOWN:
+      case 'j':
+        menu_driver(menu, REQ_DOWN_ITEM);
+        break;
+      case KEY_UP:
+      case 'k':
+        menu_driver(menu, REQ_UP_ITEM);
+        break;
+      case KEY_NPAGE:
+        menu_driver(menu, REQ_SCR_DPAGE);
+        break;
+      case KEY_PPAGE:
+        menu_driver(menu, REQ_SCR_UPAGE);
+        break;
+      case 'a':	// add
+        do_add();
+        break;
+      case 'e':	// edit
+        index = item_index(current_item(menu));
+        if (index > -1) {
+          do_edit(index);
+        }
+        break;
+    }
+    wrefresh(menu_window);
+  }
 }
 
 // Handles switch to vim and back to curses for adding a new note.
 void do_add()
 {
-	def_prog_mode();
-	endwin();
+  def_prog_mode();
+  endwin();
 
-	// add
-	char *input;
-	if (editor_do(TEMP_FILE, "", &input) < 0) {
-		// error of some kind
-		if (!input) {
-			free(input);
-		}
-		refresh();
-		reset_prog_mode();
-		return;
-	}
+  // add
+  char *input;
+  if (editor_do(TEMP_FILE, "", &input) < 0) {
+    // error of some kind
+    if (!input) {
+      free(input);
+    }
+    refresh();
+    reset_prog_mode();
+    return;
+  }
 
-    // read title; leave room for null terminator
-    char title[MAX_TITLE_LEN+1];
-    titleFromInput(input, title);
+  // read title; leave room for null terminator
+  char title[MAX_TITLE_LEN+1];
+  titleFromInput(input, title);
 
-	db_insert_note(title, input);
-	free(input);
+  db_insert_note(title, input);
+  free(input);
 
-    reload_notes();
-	refresh();
-	reset_prog_mode();
+  reload_notes();
+  refresh();
+  reset_prog_mode();
 }
 
 // Handles switch to vim and back to curses for editing an existing note.
 void do_edit(int index)
 {
-	// save and close curses
-	def_prog_mode();
-	endwin();
+  // save and close curses
+  def_prog_mode();
+  endwin();
 
-	// edit
-	char *input;
+  // edit
+  char *input;
 
-	// let user perform edit
-    printf("Editing %d\n", index);
-	int edit_result = editor_do(TEMP_FILE, notes[index].text, &input);
-	if (edit_result < 0) {
-		goto restore;
-	} else if (edit_result != 0) {
-        // read title; leave room for null terminator
-        char title[MAX_TITLE_LEN+1];
-        titleFromInput(input, title);
+  // let user perform edit
+  printf("Editing %d\n", index);
+  int edit_result = editor_do(TEMP_FILE, notes[index].text, &input);
+  if (edit_result < 0) {
+    goto restore;
+  } else if (edit_result != 0) {
+    // read title; leave room for null terminator
+    char title[MAX_TITLE_LEN+1];
+    titleFromInput(input, title);
 
-        // write to db
-		db_edit_note(notes[index].id, title, input);
-        reload_notes();
-	}
-	// if edit_result is 0, then no change has been made.
-	free(input);
+    // write to db
+    db_edit_note(notes[index].id, title, input);
+    reload_notes();
+  }
+  // if edit_result is 0, then no change has been made.
+  free(input);
 
-      restore:
-	// restores curses ui
-	refresh();
-	reset_prog_mode();
+restore:
+  // restores curses ui
+  refresh();
+  reset_prog_mode();
 }
 
-// Takes the first line from input and puts it in title, for a maximum of 
+// Takes the first line from input and puts it in title, for a maximum of
 // len characters.
 void titleFromInput(char *input, char *title)
 {
-	// Get newline. If there's no newline, get the length of the string.
-	int newline = strcspn(input, "\n");
+  // Get newline. If there's no newline, get the length of the string.
+  int newline = strcspn(input, "\n");
 
-    // index to end title at.
-    int term = newline < MAX_TITLE_LEN ? newline : MAX_TITLE_LEN;
-    // leave room for null terminator
-	strncpy(title, input, term);
-    title[term] = 0;
+  // index to end title at.
+  int term = newline < MAX_TITLE_LEN ? newline : MAX_TITLE_LEN;
+  // leave room for null terminator
+  strncpy(title, input, term);
+  title[term] = 0;
 
 }
 
 // Prints text in the middle of a window.
 // This function is taken from ncurses docs.
 void print_centered(WINDOW * win, int starty, int startx, int width,
-		    char *string, chtype color)
+    char *string, chtype color)
 {
-	int length, x, y;
-	float temp;
+  int length, x, y;
+  float temp;
 
-	if (win == NULL)
-		win = stdscr;
-	getyx(win, y, x);
-	if (startx != 0)
-		x = startx;
-	if (starty != 0)
-		y = starty;
-	if (width == 0)
-		width = 80;
+  if (win == NULL)
+    win = stdscr;
+  getyx(win, y, x);
+  if (startx != 0)
+    x = startx;
+  if (starty != 0)
+    y = starty;
+  if (width == 0)
+    width = 80;
 
-	length = strlen(string);
-	temp = (width - length) / 2;
-	x = startx + (int) temp;
-	wattron(win, color);
-	mvwprintw(win, y, x, "%s", string);
-	wattroff(win, color);
-	refresh();
+  length = strlen(string);
+  temp = (width - length) / 2;
+  x = startx + (int) temp;
+  wattron(win, color);
+  mvwprintw(win, y, x, "%s", string);
+  wattroff(win, color);
+  refresh();
 }
