@@ -51,6 +51,7 @@ int main(int argc, char **argv)
   init_curses();
 
   // get key
+  /*
   printw("Enter your key: ");
   refresh();
   char *key = input_key();
@@ -60,6 +61,7 @@ int main(int argc, char **argv)
   endwin();
   shutdown();
   return 0;
+  */
 
   // start view
   int retval = 0;
